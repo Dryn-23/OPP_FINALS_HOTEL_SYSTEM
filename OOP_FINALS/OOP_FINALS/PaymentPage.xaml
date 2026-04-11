@@ -1,0 +1,305 @@
+﻿<Page x:Class="OOP_FINALS.PaymentPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:local="clr-namespace:OOP_FINALS"
+      Background="#F5F1EB">
+
+    <Page.DataContext>
+        <local:PaymentViewModel/>
+    </Page.DataContext>
+
+    <!-- ===================== RESOURCES ===================== -->
+    <Page.Resources>
+        <!-- Colors -->
+        <SolidColorBrush x:Key="PrimaryBrown" Color="#8B5E3C"/>
+        <SolidColorBrush x:Key="DarkBrown" Color="#5C3A21"/>
+        <SolidColorBrush x:Key="LightBrown" Color="#C8A27C"/>
+        <SolidColorBrush x:Key="MutedText" Color="#8D8D8D"/>
+
+        <!-- FIXED Card Style for .NET 4.0 -->
+        <Style x:Key="Card" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="14"/>
+            <Setter Property="Padding" Value="20"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect BlurRadius="15" ShadowDepth="3" Opacity="0.15"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Button Style -->
+        <Style x:Key="BrownButton" TargetType="Button">
+            <Setter Property="Background" Value="#8B5E3C"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#A47148"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Stats Card -->
+        <Style x:Key="StatsCard" TargetType="Border">
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="20,16"/>
+            <Setter Property="Margin" Value="0,0,8,0"/>
+            <Setter Property="MinWidth" Value="260"/>
+        </Style>
+    </Page.Resources>
+
+    <!-- ===================== MAIN LAYOUT ===================== -->
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <!-- DataGrid expands here -->
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- HEADER - FIXED 24px margins -->
+        <Grid Grid.Row="0" Margin="24,24,24,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel>
+                <TextBlock Text="Customer Payment List"
+                           FontSize="28"
+                           FontWeight="Bold"
+                           Foreground="{StaticResource DarkBrown}"/>
+                <TextBlock Text="Manage your payment records"
+                           Foreground="{StaticResource MutedText}"
+                           FontSize="14"
+                           Margin="0,5,0,0"/>
+            </StackPanel>
+
+            <Button Grid.Column="1"
+                    Content="+ Add New"
+                    Style="{StaticResource BrownButton}"
+                    Width="130"
+                    Height="40"
+                    Command="{Binding NewPaymentCommand}"/>
+        </Grid>
+
+        <!-- FILTER BAR - FIXED sizes, NO converters -->
+        <Border Grid.Row="1" Style="{StaticResource Card}" Margin="24,0,24,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <ComboBox Width="160" Margin="0,0,12,0"
+                              SelectedIndex="{Binding SelectedStatusIndex, UpdateSourceTrigger=PropertyChanged}">
+                        <ComboBoxItem Content="All"/>
+                        <ComboBoxItem Content="Completed"/>
+                        <ComboBoxItem Content="Parcial"/>
+                        <ComboBoxItem Content="Cancelled"/>
+                    </ComboBox>
+
+                    <TextBox Width="240" Height="32" Padding="10,0"
+                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                             VerticalContentAlignment="Center"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="🔍 Search"
+                            Style="{StaticResource BrownButton}"
+                            Width="85" Height="32"
+                            Margin="0,0,4,0"
+                            Command="{Binding SearchCommand}"/>
+                    <Button Content="🔄 Refresh"
+                            Style="{StaticResource BrownButton}"
+                            Width="85" Height="32"
+                            Command="{Binding RefreshCommand}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- STATS CARDS - WrapPanel = RESPONSIVE -->
+        <WrapPanel Grid.Row="2" Margin="24,0,24,12" HorizontalAlignment="Stretch">
+            <Border Style="{StaticResource StatsCard}" Background="#E8F5E8">
+                <StackPanel>
+                    <TextBlock Text="{Binding TotalPayments, StringFormat=₱{0:N0}}" 
+                               FontSize="26" FontWeight="Bold" Foreground="#4CAF50"/>
+                    <TextBlock Text="Total Revenue" FontSize="12" Foreground="#4CAF50"/>
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource StatsCard}" Background="#FFF3E0">
+                <StackPanel>
+                    <TextBlock Text="{Binding TotalToday, StringFormat=₱{0:N0}}" 
+                               FontSize="26" FontWeight="Bold" Foreground="#FF9800"/>
+                    <TextBlock Text="Today" FontSize="12" Foreground="#FF9800"/>
+                </StackPanel>
+            </Border>
+            <Border Background="#E3F2FD" CornerRadius="12" Padding="20,16" MinWidth="260">
+                <StackPanel>
+                    <TextBlock Text="{Binding TotalMonth, StringFormat=₱{0:N0}}" 
+                               FontSize="26" FontWeight="Bold" Foreground="#2196F3"/>
+                    <TextBlock Text="This Month" FontSize="12" Foreground="#2196F3"/>
+                </StackPanel>
+            </Border>
+        </WrapPanel>
+
+        <!-- DATAGRID - EXPANDS with Width="*" column -->
+        <Border Grid.Row="3" Style="{StaticResource Card}" Margin="24,0,24,12">
+            <DataGrid ItemsSource="{Binding FilteredPaymentsView}"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      IsReadOnly="True"
+                      Background="White"
+                      RowBackground="#FAFAFA"
+                      AlternatingRowBackground="#F3F3F3"
+                      GridLinesVisibility="None"
+                      HeadersVisibility="Column"
+                      BorderThickness="0"
+                      ScrollViewer.VerticalScrollBarVisibility="Auto"
+                      ScrollViewer.HorizontalScrollBarVisibility="Auto">
+
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow">
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#F0F8FF"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </DataGrid.RowStyle>
+
+                <DataGrid.ColumnHeaderStyle>
+                    <Style TargetType="DataGridColumnHeader">
+                        <Setter Property="Background" Value="#F8F9FA"/>
+                        <Setter Property="Foreground" Value="{StaticResource DarkBrown}"/>
+                        <Setter Property="FontWeight" Value="SemiBold"/>
+                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                        <Setter Property="BorderBrush" Value="#E9ECEF"/>
+                        <Setter Property="Padding" Value="12,10"/>
+                    </Style>
+                </DataGrid.ColumnHeaderStyle>
+
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="ID" Binding="{Binding PaymentID}" Width="50"/>
+                    <DataGridTextColumn Header="Customer" Binding="{Binding CustomerName}" Width="*"/>
+                    <!-- EXPANDS! -->
+                    <DataGridTextColumn Header="Room" Binding="{Binding RoomNumber}" Width="80"/>
+                    <DataGridTextColumn Header="Amount" Binding="{Binding AmountPaid, StringFormat=₱{0:N0}}" Width="120">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="FontWeight" Value="Bold"/>
+                                <Setter Property="Foreground" Value="#4CAF50"/>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="Method" Binding="{Binding PaymentMethod}" Width="100"/>
+
+                    <!-- STATUS - Keep exactly as you had -->
+                    <DataGridTemplateColumn Header="Status" Width="110">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Border CornerRadius="10" Padding="8,4" Background="#E0E0E0">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="Background" Value="#9E9E9E"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding PaymentStatus}" Value="Paid">
+                                                    <Setter Property="Background" Value="#4CAF50"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding PaymentStatus}" Value="Pending">
+                                                    <Setter Property="Background" Value="#E6A23C"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding PaymentStatus}" Value="Failed">
+                                                    <Setter Property="Background" Value="#E57373"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock Text="{Binding PaymentStatus}"
+                                               Foreground="White"
+                                               FontWeight="Medium"
+                                               HorizontalAlignment="Center"
+                                               FontSize="11"/>
+                                </Border>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTextColumn Header="Date" 
+                                        Binding="{Binding PaymentDate, StringFormat='{}{0:MMM dd, yyyy}'}" 
+                                        Width="110"/>
+
+                    <!-- ACTIONS -->
+                    <DataGridTemplateColumn Header="Actions" Width="140">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Margin="4">
+                                    <Button Content="📄 Bill"
+                                            Style="{StaticResource BrownButton}"
+                                            Width="55" Height="28"
+                                            Margin="0,0,5,0"
+                                            Command="{Binding DataContext.ViewBillingCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                            CommandParameter="{Binding}"/>
+                                    <Button Content="✏️ Edit"
+                                            Style="{StaticResource BrownButton}"
+                                            Width="55" Height="28"
+                                            Background="#FF9800"
+                                            Command="{Binding DataContext.EditPaymentCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                            CommandParameter="{Binding}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <!-- FOOTER - FIXED margins -->
+        <Border Grid.Row="4" Style="{StaticResource Card}" Margin="24,0,24,24">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="Total Revenue:" FontSize="16" FontWeight="SemiBold"
+                               Foreground="{StaticResource DarkBrown}" Margin="0,0,8,0"/>
+                    <TextBlock Text="{Binding TotalPayments, StringFormat=₱{0:N0}}"
+                               FontSize="28" FontWeight="Bold" Foreground="#4CAF50"/>
+                </StackPanel>
+
+                <TextBlock Grid.Column="1" 
+                           Text="{Binding RecordCount, StringFormat={}{0} Records}"
+                           FontSize="18" FontWeight="SemiBold"
+                           Foreground="{StaticResource DarkBrown}"
+                           VerticalAlignment="Center" 
+                           Margin="32,0"/>
+
+                <Button Grid.Column="2"
+                        Content="🖨️ Export"
+                        Style="{StaticResource BrownButton}"
+                        Width="100" Height="36"
+                        Margin="16,0,0,0"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Page>

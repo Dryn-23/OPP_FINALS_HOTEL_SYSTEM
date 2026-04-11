@@ -1,0 +1,355 @@
+﻿<Window x:Class="OOP_FINALS.MainDashboard"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:Icon="http://metro.mahapps.com/winfx/xaml/iconpacks"
+        Title="Hotel Admin Dashboard" 
+        MinHeight="600" MinWidth="900"
+        WindowStartupLocation="CenterScreen" 
+        WindowStyle="None"
+        AllowsTransparency="True" Background="Transparent"
+        ResizeMode="CanResizeWithGrip"
+        x:Name="MainWindow">
+
+    <!-- Window Controls Bar -->
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="35"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Title Bar -->
+        <Border x:Name="TitleBar" Grid.Row="0" Background="#FF9E6827" MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Window Title -->
+                <TextBlock Grid.Column="0" Text="JOHNCIS LODGE - Admin Dashboard" 
+                          Foreground="White" FontSize="13" FontWeight="Medium"
+                          VerticalAlignment="Center" Margin="15,0,0,0"/>
+
+                <!-- Window Controls -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,5,0">
+                    <!-- Minimize Button -->
+                    <Button x:Name="MinimizeButton" Width="40" Height="35" Background="Transparent" 
+                            BorderThickness="0" Click="MinimizeButton_Click" 
+                            Cursor="Hand" ToolTip="Minimize">
+                        <Icon:PackIconMaterial Kind="WindowMinimize" Width="14" Height="14" Foreground="White"/>
+                        <Button.Effect>
+                            <DropShadowEffect Color="Black" Direction="270" ShadowDepth="1" BlurRadius="4" Opacity="0.3"/>
+                        </Button.Effect>
+                    </Button>
+
+                    <!-- Maximize/Restore Button -->
+                    <Button x:Name="MaximizeButton" Width="40" Height="35" Background="Transparent" 
+                            BorderThickness="0" Click="MaximizeButton_Click" 
+                            Cursor="Hand" ToolTip="Maximize">
+                        <Icon:PackIconMaterial x:Name="MaximizeIcon" Kind="WindowMaximize" Width="14" Height="14" Foreground="White"/>
+                        <Button.Effect>
+                            <DropShadowEffect Color="Black" Direction="270" ShadowDepth="1" BlurRadius="4" Opacity="0.3"/>
+                        </Button.Effect>
+                    </Button>
+
+                    <!-- Close Button -->
+                    <Button x:Name="CloseButton" Width="40" Height="35" Background="Transparent" 
+                            BorderThickness="0" Click="CloseButton_Click" 
+                            Cursor="Hand" ToolTip="Close">
+                        <Icon:PackIconMaterial Kind="Close" Width="14" Height="14" Foreground="White"/>
+                        <Button.Effect>
+                            <DropShadowEffect Color="Black" Direction="270" ShadowDepth="1" BlurRadius="4" Opacity="0.3"/>
+                        </Button.Effect>
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#E53E3E"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Outer Border with rounded corners -->
+        <Border x:Name="MainBorder" Grid.Row="1" CornerRadius="30" Margin="0,0,0,5"
+                MouseDown="Border_MouseDown">
+
+            <!-- Grid for layering background image, gradient, and content -->
+            <Grid>
+                <!-- 1. Background Image -->
+                <Image x:Name="BackgroundImage" Source="images/BG.jpg" Stretch="Fill">
+                    <Image.Effect>
+                        <BlurEffect Radius="15"/>
+                    </Image.Effect>
+                </Image>
+
+                <!-- 2. Gradient Overlay -->
+                <Rectangle>
+                    <Rectangle.Fill>
+                        <LinearGradientBrush StartPoint="0,1" EndPoint="1,0">
+                            <GradientStop Color="#80000000" Offset="0"/>
+                            <GradientStop Color="#FF9E6827" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+
+                <!-- 3. Main Content Grid -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Sidebar Background -->
+                    <Border Background="#654321" Grid.Column="0"/>
+
+                    <!-- ✅ ENHANCED SIDEBAR WITH LOADING OVERLAY -->
+                    <Border x:Name="SidebarWrapper" Width="250" MinWidth="70" MaxWidth="300" Grid.Column="0">
+                        <Grid x:Name="SidebarGrid">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Menu Toggle Button -->
+                            <Button x:Name="MenuToggleButton" Margin="20,28,3,0" 
+                                    Style="{StaticResource topButton}" Click="Button_Click">
+                                <Icon:PackIconMaterial Kind="Menu" Width="18" Height="18"/>
+                            </Button>
+
+                            <!-- ========== SIDEBAR LOADING OVERLAY ========== -->
+                            <Border x:Name="SidebarLoadingOverlay" Grid.Row="1" Background="Transparent" Visibility="Visible">
+                                <Grid>
+                                    <!-- Dark overlay with your theme color -->
+                                    <Rectangle Fill="#654321" RadiusX="30" RadiusY="30">
+                                        <Rectangle.Effect>
+                                            <DropShadowEffect Color="#FF9E6827" BlurRadius="20" Opacity="0.5"/>
+                                        </Rectangle.Effect>
+                                    </Rectangle>
+
+                                    <!-- Pulsing shimmer bar -->
+                                    <Rectangle x:Name="SidebarShimmer" Width="180" Height="250" 
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               Margin="0,0,0,60" Fill="#40FFFFFF" RadiusX="20" RadiusY="20"
+                                               RenderTransformOrigin="0.5,0.5">
+                                        <Rectangle.RenderTransform>
+                                            <ScaleTransform x:Name="SidebarShimmerScale" ScaleX="0.7" ScaleY="0.7"/>
+                                        </Rectangle.RenderTransform>
+                                        <Rectangle.Effect>
+                                            <DropShadowEffect Color="#FF9E6827" BlurRadius="10" Opacity="0.4"/>
+                                        </Rectangle.Effect>
+                                    </Rectangle>
+
+                                    <!-- Animated loading dots -->
+                                    <StackPanel x:Name="LoadingDots" HorizontalAlignment="Center" VerticalAlignment="Center" 
+                                                Orientation="Horizontal" Margin="0,0,0,50">
+                                        <Ellipse x:Name="Dot1" Width="10" Height="10" Fill="#FF9E6827" Margin="0,0,6,0"/>
+                                        <Ellipse x:Name="Dot2" Width="10" Height="10" Fill="#FF9E6827" Margin="0,0,6,0"/>
+                                        <Ellipse x:Name="Dot3" Width="10" Height="10" Fill="#FF9E6827"/>
+                                    </StackPanel>
+
+                                    <!-- Loading text -->
+                                    <TextBlock x:Name="SidebarLoadingText" Text="Loading Menu..." 
+                                               Foreground="White" FontSize="14" FontWeight="SemiBold"
+                                               HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                                               Margin="0,0,0,30">
+                                        <TextBlock.Effect>
+                                            <DropShadowEffect Color="#FF9E6827" BlurRadius="8" Opacity="0.6"/>
+                                        </TextBlock.Effect>
+                                    </TextBlock>
+                                </Grid>
+                            </Border>
+
+                            <!-- ========== ORIGINAL SIDEBAR CONTENT ========== -->
+                            <Border x:Name="SidebarContent" Grid.Row="1" Margin="0,20,0,0" Visibility="Collapsed">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="#FF9E6827" Offset="0"/>
+                                        <GradientStop Color="#FF8B4513" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <Border.CornerRadius>
+                                    <CornerRadius TopRight="50" BottomRight="30"/>
+                                </Border.CornerRadius>
+
+                                <DockPanel>
+                                    <!-- Logo -->
+                                    <Border x:Name="LogoBorder" Width="90" Height="90" Padding="4" 
+                                            Background="White" CornerRadius="100"
+                                            DockPanel.Dock="Top" HorizontalAlignment="Left" Margin="40,-35,0,0">
+                                        <Ellipse>
+                                            <Ellipse.Fill>
+                                                <ImageBrush ImageSource="/images/logo.png"/>
+                                            </Ellipse.Fill>
+                                        </Ellipse>
+                                    </Border>
+
+                                    <TextBlock x:Name="LogoText" Text="JOHNCIS LODGE"
+                                               Foreground="White" FontSize="24" FontWeight="Bold"
+                                               DockPanel.Dock="Top" TextAlignment="Center" Margin="0,10,0,0"/>
+
+                                    <TextBlock x:Name="SubText" Text="Admin Dashboard"
+                                               Foreground="#e2e8f0" FontSize="14" FontWeight="Medium"
+                                               DockPanel.Dock="Top" TextAlignment="Center" Margin="0,0,0,20"/>
+
+                                    <Separator Margin="40,20,40,20" DockPanel.Dock="Top" Height="1" Background="#a0a7c0"/>
+
+                                    <!-- Navigation Menu -->
+                                    <StackPanel x:Name="SidebarMenu" DockPanel.Dock="Top" Margin="0,0,0,20">
+                                        <Button Style="{StaticResource menuButton}" Click="Dashboard_Click" Tag="Dashboard">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Icon:PackIconMaterial x:Name="IconDashboard" Kind="ViewDashboard" Style="{StaticResource menuButtonIcon}"/>
+                                                <TextBlock x:Name="TextDashboard" Text="Dashboard" Margin="10,0,0,0"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <Button Style="{StaticResource menuButton}" Click="Bookings_Click" Tag="Bookings">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Icon:PackIconMaterial x:Name="IconBookings" Kind="CalendarCheck" Style="{StaticResource menuButtonIcon}"/>
+                                                <TextBlock x:Name="TextBookings" Text="Bookings" Margin="10,0,0,0"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <Button Style="{StaticResource menuButton}" Click="Rooms_Click" Tag="Rooms">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Icon:PackIconMaterial x:Name="IconRooms" Kind="Bed" Style="{StaticResource menuButtonIcon}"/>
+                                                <TextBlock x:Name="TextRooms" Text="Rooms" Margin="10,0,0,0"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <Button Style="{StaticResource menuButton}" Click="Customers_Click" Tag="Customers">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Icon:PackIconMaterial x:Name="IconCustomers" Kind="AccountBoxMultiple" Style="{StaticResource menuButtonIcon}"/>
+                                                <TextBlock x:Name="TextCustomers" Text="Customers" Margin="10,0,0,0"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <Button Style="{StaticResource menuButton}" Click="Payment_Click" Tag="Payment">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Icon:PackIconMaterial x:Name="IconPayment" Kind="CurrencyPhp" Style="{StaticResource menuButtonIcon}"/>
+                                                <TextBlock x:Name="TextPayment" Text="Payment" Margin="10,0,0,0"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <Button Style="{StaticResource menuButton}" Click="Staff_Click" Tag="Staff">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Icon:PackIconMaterial x:Name="IconStaff" Kind="AccountCowboyHat" Style="{StaticResource menuButtonIcon}"/>
+                                                <TextBlock x:Name="TextStaff" Text="Staff" Margin="10,0,0,0"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <Button Style="{StaticResource menuButton}" Click="Report_Click" Tag="Report">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Icon:PackIconMaterial x:Name="IconReport" Kind="HomeAnalytics" Style="{StaticResource menuButtonIcon}"/>
+                                                <TextBlock x:Name="TextReport" Text="Report" Margin="10,0,0,0"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <Button Style="{StaticResource menuButton}" Click="Settings_Click" Tag="Settings">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Icon:PackIconMaterial x:Name="IconSettings" Kind="SettingsHelper" Style="{StaticResource menuButtonIcon}"/>
+                                                <TextBlock x:Name="TextSettings" Text="Settings" Margin="10,0,0,0"/>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <Button Style="{StaticResource menuButton}" Click="Logout_Click" Tag="Logout">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Icon:PackIconMaterial x:Name="IconLogout" Kind="Logout" Style="{StaticResource menuButtonIcon}"/>
+                                                <TextBlock x:Name="TextLogout" Text="Logout" Margin="10,0,0,0"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+
+                                    <!-- User Profile -->
+                                    <StackPanel DockPanel.Dock="Bottom" Margin="30,0,30,30" HorizontalAlignment="Center">
+                                        <Border Background="#FF9E6827" CornerRadius="25" Padding="15">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Ellipse Width="35" Height="35" Margin="0,0,10,0">
+                                                    <Ellipse.Fill>
+                                                        <ImageBrush ImageSource="images/denmark.png"/>
+                                                    </Ellipse.Fill>
+                                                </Ellipse>
+                                                <StackPanel x:Name="ProfileTextStack">
+                                                    <TextBlock Text="Denmark" Foreground="White" FontSize="14" FontWeight="Medium"/>
+                                                    <TextBlock Text="BSIT-22B" Foreground="#e2e8f0" FontSize="11"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+                                </DockPanel>
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <!-- Main Content Area -->
+                    <Grid Grid.Column="1" Margin="30">
+                        <!-- Main Loading Overlay -->
+                        <Border x:Name="LoadingOverlay" Background="Transparent" Visibility="Visible">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <!-- Enhanced Skeleton Loader -->
+                                <Canvas Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Width="500" Height="300">
+                                    <!-- Outer glow -->
+                                    <Rectangle Width="500" Height="300" RadiusX="25" RadiusY="25" Fill="Transparent">
+                                        <Rectangle.Effect>
+                                            <DropShadowEffect Color="White" BlurRadius="25" Opacity="0.7"/>
+                                        </Rectangle.Effect>
+                                    </Rectangle>
+
+                                    <!-- Themed background -->
+                                    <Rectangle x:Name="DarkBg" Canvas.Left="0" Canvas.Top="0" Width="500" Height="300" 
+                                               RadiusX="20" RadiusY="20" Fill="#654321">
+                                        <Rectangle.Effect>
+                                            <DropShadowEffect Color="#FF9E6827" BlurRadius="15" Opacity="0.4"/>
+                                        </Rectangle.Effect>
+                                    </Rectangle>
+
+                                    <!-- Shimmer effect -->
+                                    <Rectangle x:Name="ShimmerBackground" Canvas.Left="0" Canvas.Top="0" Width="500" Height="300" 
+                                               RadiusX="20" RadiusY="20" Opacity="0.9">
+                                        <Rectangle.RenderTransform>
+                                            <TranslateTransform x:Name="ShimmerTranslate" X="-350"/>
+                                        </Rectangle.RenderTransform>
+                                    </Rectangle>
+
+                                    <!-- Skeleton elements with theme color -->
+                                    <Rectangle x:Name="HeaderBar" Canvas.Left="110" Canvas.Top="35" Width="280" Height="25" 
+                                               RadiusX="12" RadiusY="12" Fill="#FF9E6827" Opacity="0.8"/>
+                                    <Rectangle x:Name="StatBar1" Canvas.Left="50" Canvas.Top="85" Width="110" Height="65" 
+                                               RadiusX="12" RadiusY="12" Fill="#FF9E6827" Opacity="0.8"/>
+                                    <Rectangle x:Name="StatBar2" Canvas.Left="185" Canvas.Top="85" Width="110" Height="65" 
+                                               RadiusX="12" RadiusY="12" Fill="#FF9E6827" Opacity="0.8"/>
+                                    <Rectangle x:Name="StatBar3" Canvas.Left="320" Canvas.Top="85" Width="110" Height="65" 
+                                               RadiusX="12" RadiusY="12" Fill="#FF9E6827" Opacity="0.8"/>
+                                    <Rectangle x:Name="ActivityBar" Canvas.Left="90" Canvas.Top="190" Width="320" Height="45" 
+                                               RadiusX="10" RadiusY="10" Fill="#FF9E6827" Opacity="0.8"/>
+                                </Canvas>
+
+                                <!-- Loading Text -->
+                                <TextBlock Grid.Row="1" x:Name="LoadingText" Text="Loading Dashboard..." 
+                                           Foreground="White" FontSize="18" FontWeight="SemiBold" 
+                                           HorizontalAlignment="Center" Margin="0,40,0,0" VerticalAlignment="Bottom">
+                                    <TextBlock.Effect>
+                                        <DropShadowEffect Color="Black" BlurRadius="5" Opacity="0.5"/>
+                                    </TextBlock.Effect>
+                                </TextBlock>
+                            </Grid>
+                        </Border>
+
+                        <!-- Content Frame -->
+                        <Frame x:Name="MainFrame" NavigationUIVisibility="Hidden" Background="Transparent" Visibility="Collapsed"/>
+                    </Grid>
+                </Grid>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

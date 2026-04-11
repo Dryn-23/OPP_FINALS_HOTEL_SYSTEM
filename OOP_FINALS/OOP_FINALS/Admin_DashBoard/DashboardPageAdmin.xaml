@@ -1,0 +1,125 @@
+﻿<Page x:Class="OOP_FINALS.DashboardPageAdmin"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Background="Transparent">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="20">
+
+            <!-- 👋 GREETING -->
+            <TextBlock Text="Hi, Admin!" FontSize="28" FontWeight="Bold" 
+                       Foreground="White" Margin="0,0,0,10"/>
+            <TextBlock Text="Here's what's happening with your hotel today" 
+                       Foreground="#B0B0B0" FontSize="16" Margin="0,0,0,30"/>
+
+            <!-- 📊 STATS CARDS -->
+            <UniformGrid Columns="4" Margin="0,0,0,30">
+                <Border Background="White" CornerRadius="15" Margin="10" Padding="20">
+                    <StackPanel>
+                        <TextBlock Text="📘" FontSize="24" Margin="0,0,10,0"/>
+                        <TextBlock Text="{Binding TotalBookings}" FontSize="28" FontWeight="Bold"/>
+                        <TextBlock Text="New Bookings" FontSize="12" Foreground="Gray"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="White" CornerRadius="15" Margin="10" Padding="20">
+                    <StackPanel>
+                        <TextBlock Text="🏨" FontSize="24" Margin="0,0,10,0"/>
+                        <TextBlock Text="{Binding TotalRooms}" FontSize="28" FontWeight="Bold"/>
+                        <TextBlock Text="Available Rooms" FontSize="12" Foreground="Gray"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="White" CornerRadius="15" Margin="10" Padding="20">
+                    <StackPanel>
+                        <TextBlock Text="✅" FontSize="24" Margin="0,0,10,0"/>
+                        <TextBlock Text="{Binding CheckIns}" FontSize="28" FontWeight="Bold"/>
+                        <TextBlock Text="Today's Check-in" FontSize="12" Foreground="Gray"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="White" CornerRadius="15" Margin="10" Padding="20">
+                    <StackPanel>
+                        <TextBlock Text="🚪" FontSize="24" Margin="0,0,10,0"/>
+                        <TextBlock Text="{Binding CheckOuts}" FontSize="28" FontWeight="Bold"/>
+                        <TextBlock Text="Today's Check-out" FontSize="12" Foreground="Gray"/>
+                    </StackPanel>
+                </Border>
+            </UniformGrid>
+
+            <!-- 📈 DYNAMIC METRICS FROM DATABASE -->
+            <Grid Margin="0,0,0,30">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+
+                <Border Background="White" CornerRadius="15" Margin="10" Padding="20" Grid.Column="0">
+                    <StackPanel>
+                        <TextBlock Text="💰 Revenue" FontWeight="Bold" FontSize="18" Margin="0,0,0,15"/>
+                        <TextBlock Text="{Binding TotalRevenue}" FontSize="32" FontWeight="Bold" 
+                                   Foreground="#27AE60"/>
+                        <ProgressBar Value="{Binding RevenueProgress}" Height="12" Margin="0,15,0,0" 
+                                     Background="#EEE" Foreground="#27AE60"/>
+                        <TextBlock Text="{Binding RevenueTrend}" FontSize="12" Foreground="#27AE60" 
+                                   HorizontalAlignment="Right" Margin="0,5,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Background="White" CornerRadius="15" Margin="10" Padding="20" Grid.Column="1">
+                    <StackPanel>
+                        <TextBlock Text="📊 Occupancy" FontWeight="Bold" FontSize="18" Margin="0,0,0,15"/>
+                        <TextBlock Text="{Binding OccupancyRate}" FontSize="32" FontWeight="Bold" 
+                                   Foreground="#3498DB"/>
+                        <ProgressBar Value="{Binding OccupancyProgress}" Height="12" Margin="0,15,0,0" 
+                                     Background="#EEE" Foreground="#3498DB"/>
+                        <TextBlock Text="{Binding OccupancyTrend}" FontSize="12" Foreground="#3498DB" 
+                                   HorizontalAlignment="Right" Margin="0,5,0,0"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- 🕒 DYNAMIC RECENT ACTIVITY FROM DATABASE -->
+            <Border Background="White" CornerRadius="15" Padding="20">
+                <StackPanel>
+                    <Grid>
+                        <TextBlock Text="📋 Recent Activity" FontWeight="Bold" FontSize="18" Margin="0,0,0,20"/>
+                        <TextBlock x:Name="txtActivityCount" Text="{Binding ActivityCount}" 
+                                   FontSize="14" Foreground="#3498DB" HorizontalAlignment="Right"/>
+                    </Grid>
+
+                    <!-- Dynamic ListBox for activities -->
+                    <ListBox x:Name="lstRecentActivity" Height="200" 
+                             Background="Transparent" BorderThickness="0"
+                             ItemContainerStyle="{DynamicResource ActivityItemStyle}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding ActivityText}" 
+                                           Foreground="Gray" FontSize="13" Margin="0,5"/>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <Button Content="View All Activities" HorizontalAlignment="Right" Margin="0,15,0,0"
+                            Click="ViewAllActivities_Click" Background="#3498DB" Foreground="White"
+                            BorderThickness="0" Padding="15,8" Cursor="Hand"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+
+    <!-- Activity ListBox Style -->
+    <Page.Resources>
+        <Style x:Key="ActivityItemStyle" TargetType="ListBoxItem">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F8F9FA"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Page.Resources>
+</Page>

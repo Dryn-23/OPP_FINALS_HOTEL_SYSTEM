@@ -12,10 +12,10 @@
         MouseDown="Window_MouseDown">
 
     <Border CornerRadius="12">
-        <!-- BACKGROUND IMAGE -->
+        <!-- BACKGROUND IMAGE 
         <Border.Background>
             <ImageBrush ImageSource="images/BG.jpg" Stretch="Fill"/>
-        </Border.Background>
+        </Border.Background> -->
 
         <!-- MAIN CONTAINER -->
         <Border CornerRadius="10" BorderThickness="2" Opacity="0.95">

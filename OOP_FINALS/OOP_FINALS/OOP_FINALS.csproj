@@ -332,7 +332,7 @@
     <Compile Include="CustomerPage.xaml.cs">
       <DependentUpon>CustomerPage.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DashboardPage.xaml.cs">
+    <Compile Include="AdminMainDashboard\DashboardPage.xaml.cs">
       <DependentUpon>DashboardPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="DatabaseHelper.cs" />
@@ -350,7 +350,6 @@
       <DependentUpon>PaymentPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="PaymentViewModel.cs" />
-    <Compile Include="PaymentViewModelItem.cs" />
     <Compile Include="RelayCommand.cs" />
     <Compile Include="RoomModel.cs" />
     <Compile Include="RoomViewModel.cs" />
@@ -403,7 +402,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="DashboardPage.xaml">
+    <Page Include="AdminMainDashboard\DashboardPage.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

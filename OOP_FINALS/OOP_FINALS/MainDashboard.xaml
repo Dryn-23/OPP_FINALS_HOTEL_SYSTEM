@@ -286,7 +286,7 @@
                     </Border>
 
                     <!-- Main Content Area -->
-                    <Grid Grid.Column="1" Margin="30">
+                    <Grid Grid.Column="1" Margin="0">
                         <!-- Main Loading Overlay -->
                         <Border x:Name="LoadingOverlay" Background="Transparent" Visibility="Visible">
                             <Grid>
@@ -297,15 +297,15 @@
                                 </Grid.RowDefinitions>
 
                                 <!-- Enhanced Skeleton Loader -->
-                                <Canvas Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Width="500" Height="300">
-                                    <!-- Outer glow -->
+                                <!-- "<Canvas Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Width="500" Height="300">
+                                    
                                     <Rectangle Width="500" Height="300" RadiusX="25" RadiusY="25" Fill="Transparent">
                                         <Rectangle.Effect>
                                             <DropShadowEffect Color="White" BlurRadius="25" Opacity="0.7"/>
                                         </Rectangle.Effect>
                                     </Rectangle>
 
-                                    <!-- Themed background -->
+                                    
                                     <Rectangle x:Name="DarkBg" Canvas.Left="0" Canvas.Top="0" Width="500" Height="300" 
                                                RadiusX="20" RadiusY="20" Fill="#654321">
                                         <Rectangle.Effect>
@@ -313,7 +313,7 @@
                                         </Rectangle.Effect>
                                     </Rectangle>
 
-                                    <!-- Shimmer effect -->
+                                 
                                     <Rectangle x:Name="ShimmerBackground" Canvas.Left="0" Canvas.Top="0" Width="500" Height="300" 
                                                RadiusX="20" RadiusY="20" Opacity="0.9">
                                         <Rectangle.RenderTransform>
@@ -321,7 +321,7 @@
                                         </Rectangle.RenderTransform>
                                     </Rectangle>
 
-                                    <!-- Skeleton elements with theme color -->
+                               
                                     <Rectangle x:Name="HeaderBar" Canvas.Left="110" Canvas.Top="35" Width="280" Height="25" 
                                                RadiusX="12" RadiusY="12" Fill="#FF9E6827" Opacity="0.8"/>
                                     <Rectangle x:Name="StatBar1" Canvas.Left="50" Canvas.Top="85" Width="110" Height="65" 
@@ -332,21 +332,31 @@
                                                RadiusX="12" RadiusY="12" Fill="#FF9E6827" Opacity="0.8"/>
                                     <Rectangle x:Name="ActivityBar" Canvas.Left="90" Canvas.Top="190" Width="320" Height="45" 
                                                RadiusX="10" RadiusY="10" Fill="#FF9E6827" Opacity="0.8"/>
-                                </Canvas>
+                                </Canvas> -->
 
-                                <!-- Loading Text -->
+                                <!-- Loading Text 
                                 <TextBlock Grid.Row="1" x:Name="LoadingText" Text="Loading Dashboard..." 
                                            Foreground="White" FontSize="18" FontWeight="SemiBold" 
                                            HorizontalAlignment="Center" Margin="0,40,0,0" VerticalAlignment="Bottom">
                                     <TextBlock.Effect>
                                         <DropShadowEffect Color="Black" BlurRadius="5" Opacity="0.5"/>
                                     </TextBlock.Effect>
-                                </TextBlock>
+                                </TextBlock> -->
                             </Grid>
                         </Border>
 
                         <!-- Content Frame -->
-                        <Frame x:Name="MainFrame" NavigationUIVisibility="Hidden" Background="Transparent" Visibility="Collapsed"/>
+                        <Frame x:Name="MainFrame"
+       Grid.Row="0"
+       HorizontalAlignment="Stretch"
+       VerticalAlignment="Stretch"
+       HorizontalContentAlignment="Stretch"
+       VerticalContentAlignment="Stretch"
+       NavigationUIVisibility="Hidden"
+       Background="#F5F1EB"
+       Margin="0"
+       Padding="0"
+       Visibility="Collapsed"/>
                     </Grid>
                 </Grid>
             </Grid>

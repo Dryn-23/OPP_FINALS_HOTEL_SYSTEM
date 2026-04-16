@@ -61,5 +61,17 @@ public class DatabaseHelper
         }
         return dataTable;
     }
+    public object ExecuteScalarWithParam(string query, string paramName, object value)
+    {
+        using (SqlConnection conn = new SqlConnection(connectionString))
+        {
+            conn.Open();
+            using (SqlCommand cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue(paramName, value ?? DBNull.Value);
+                return cmd.ExecuteScalar();
+            }
+        }
+    }
 
 }

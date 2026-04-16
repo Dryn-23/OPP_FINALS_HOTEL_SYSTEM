@@ -105,11 +105,11 @@ namespace OOP_FINALS
             CreateShimmerEffect();
             StartShimmerAnimation();
 
-            AnimateBar(HeaderBar, 0.1);
-            AnimateBar(StatBar1, 0.3);
-            AnimateBar(StatBar2, 0.45);
-            AnimateBar(StatBar3, 0.6);
-            AnimateBar(ActivityBar, 0.8);
+            //AnimateBar(HeaderBar, 0.1);
+            //AnimateBar(StatBar1, 0.3);
+            //AnimateBar(StatBar2, 0.45);
+            //AnimateBar(StatBar3, 0.6);
+            //AnimateBar(ActivityBar, 0.8);
         }
 
         private void CreateShimmerEffect()
@@ -125,14 +125,14 @@ namespace OOP_FINALS
             shimmerBrush.GradientStops.Add(new GradientStop(Color.FromArgb(100, 255, 255, 255), 0.6));
             shimmerBrush.GradientStops.Add(new GradientStop(Color.FromArgb(0, 255, 255, 255), 1));
 
-            ShimmerBackground.Fill = shimmerBrush;
+            //ShimmerBackground.Fill = shimmerBrush;
         }
 
         private void StartShimmerAnimation()
         {
             var shimmerAnim = new DoubleAnimation(-350, 600, TimeSpan.FromSeconds(2));
             shimmerAnim.RepeatBehavior = RepeatBehavior.Forever;
-            ShimmerTranslate.BeginAnimation(TranslateTransform.XProperty, shimmerAnim);
+            //ShimmerTranslate.BeginAnimation(TranslateTransform.XProperty, shimmerAnim);
         }
 
         private void AnimateBar(FrameworkElement bar, double delay)
@@ -203,7 +203,7 @@ namespace OOP_FINALS
                 await HideLoadingOverlayAsync();
 
                 // ✅ Use DEFAULT constructor (no parameters)
-                MainFrame.Navigate(new DashboardPage());
+                MainFrame.Navigate(new AdminMainDashboard.DashboardPage());
                 MainFrame.Visibility = Visibility.Visible;
 
                 SetActiveMenuButton(IconDashboard, TextDashboard);
@@ -214,7 +214,7 @@ namespace OOP_FINALS
                 await Task.Delay(1500);
                 await HideSidebarLoadingAsync();
                 await HideLoadingOverlayAsync();
-                MainFrame.Navigate(new DashboardPage());
+                MainFrame.Navigate(new AdminMainDashboard.DashboardPage());
                 SetActiveMenuButton(IconDashboard, TextDashboard);
             }
         }
@@ -247,7 +247,7 @@ namespace OOP_FINALS
         {
             SetActiveMenuButton(IconDashboard, TextDashboard);
             await ShowPageLoadingAsync("Loading Dashboard...");
-            MainFrame.Navigate(new DashboardPage());  // ✅ DEFAULT constructor
+            MainFrame.Navigate(new AdminMainDashboard.DashboardPage());  // ✅ DEFAULT constructor
             await HideLoadingOverlayAsync();
         }
 
@@ -288,7 +288,7 @@ namespace OOP_FINALS
 
         private async Task ShowPageLoadingAsync(string loadingText = "Loading...")
         {
-            LoadingText.Text = loadingText;
+            //LoadingText.Text = loadingText;
             LoadingOverlay.Visibility = Visibility.Visible;
             LoadingOverlay.Opacity = 1.0;
             await Task.Delay(800);

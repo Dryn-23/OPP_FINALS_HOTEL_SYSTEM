@@ -9,7 +9,6 @@
         Height="550"
         Width="800"
         WindowStyle="None"
-        ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen"
         Background="Transparent"
         AllowsTransparency="True"
@@ -58,6 +57,7 @@
                         <ColumnDefinition/>
                         <ColumnDefinition Width="25"/>
                         <ColumnDefinition Width="25"/>
+                        <ColumnDefinition Width="25"/>
                         <ColumnDefinition Width="5"/>
                     </Grid.ColumnDefinitions>
 
@@ -69,7 +69,8 @@
                                Margin="10,0,0,0"/>
 
                     <!-- MINIMIZE -->
-                    <Button Grid.Column="1"
+                    <Button x:Name="btnMinimize"
+                            Grid.Column="1"
                             Content="-"
                             Click="btnMinimize_Click">
                         <Button.Style>
@@ -95,8 +96,36 @@
                         </Button.Template>
                     </Button>
 
+                    <!-- MAXIMIZE/RESTORE -->
+                    <Button x:Name="btnMaximize"
+                            Grid.Column="2"
+                            Content="□"
+                            Click="btnMaximize_Click">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Background" Value="#FF9E6827"/>
+                                <Setter Property="Foreground" Value="White"/>
+                                <Setter Property="FontSize" Value="14"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#FF7F5915"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Width="18" Height="18" CornerRadius="9"
+                                        Background="{TemplateBinding Background}">
+                                    <ContentPresenter HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+
                     <!-- CLOSE -->
-                    <Button Grid.Column="2"
+                    <Button Grid.Column="3"
                             Content="X"
                             Click="btnClose_Click">
                         <Button.Style>

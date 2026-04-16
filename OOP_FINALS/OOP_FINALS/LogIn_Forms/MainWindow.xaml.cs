@@ -76,7 +76,7 @@ namespace OOP_FINALS
                     }
                     else
                     {
-                        new Dashboard().Show();
+                        new OOP_FINALS.HotelReservation.HotelReservation().Show();
                     }
 
                     this.Close();
@@ -163,7 +163,22 @@ namespace OOP_FINALS
             reset.Show();
             this.Close();
         }
-
        
+        private void btnMaximize_Click(object sender, RoutedEventArgs e)
+        {
+            if (WindowState == WindowState.Maximized)
+            {
+                WindowState = WindowState.Normal;
+                btnMaximize.Content = "□"; // Square for maximize
+            }
+            else
+            {
+                WindowState = WindowState.Maximized;
+                btnMaximize.Content = "❐"; // Smaller square for restore
+            }
+        }
+
+        
+
     }
 }

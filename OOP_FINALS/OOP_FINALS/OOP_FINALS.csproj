@@ -339,6 +339,9 @@
     <Compile Include="Data_Models\DashboardStats.cs" />
     <Compile Include="Data_Models\Data\LodgeDbContext.cs" />
     <Compile Include="HighlightConverter.cs" />
+    <Compile Include="HotelReservation\HotelReservation.xaml.cs">
+      <DependentUpon>HotelReservation.xaml</DependentUpon>
+    </Compile>
     <Compile Include="MainDashboard.xaml.cs">
       <DependentUpon>MainDashboard.xaml</DependentUpon>
     </Compile>
@@ -401,6 +404,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="DashboardPage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="HotelReservation\HotelReservation.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

@@ -22,7 +22,7 @@ namespace OOP_FINALS.Secret
             try
             {
               
-                string managerVideoPath = @"C:\Users\GARIN\Downloads\ssstik.io_@hxbioverdozed_1775309913993.mp4";
+                string managerVideoPath = @"C:\Users\GARIN\Downloads\AQPSExlNyrxJXuUtVIoUuvSOUjKc2zLtMQR0e9a0EcWzKVj_G_38XndPl9RiqYL7YV1l9U5z8gTGvuFJgYBXiyCkZr4GD4VuYY5smPCwPw.mp4";
 
                 MainVideoPlayer.Source = new Uri(managerVideoPath, UriKind.Absolute);
                 MainVideoPlayer.Play();

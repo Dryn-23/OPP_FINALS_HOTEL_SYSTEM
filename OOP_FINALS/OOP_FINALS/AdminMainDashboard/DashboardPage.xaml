@@ -100,7 +100,7 @@
              STICKY HEADER
         ═══════════════════════════════════════════════════════════════════ -->
         <Border Grid.Row="0"
-                Background="#7A4A17"
+                Background="#654321"
                 Padding="28,14"
                 Panel.ZIndex="10">
             <Border.Effect>
@@ -245,7 +245,7 @@
                 </Grid>
 
                 <!-- ─── ROW 2 — RECENT BOOKINGS + QUICK STATS / ACTIVITY ─── -->
-                <Grid Grid.Row="2" Margin="28,16,28,0">
+                <Grid Grid.Row="3" Margin="28,16,28,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="3*" />
                         <ColumnDefinition Width="2*" />
@@ -464,7 +464,7 @@
                 </Grid>
 
                 <!-- ─── ROW 3 — MONTHLY BAR CHART ───────────────────────── -->
-                <Border Grid.Row="3" Style="{StaticResource CardStyle}" Margin="28,16,28,0">
+                <Border Grid.Row="2" Style="{StaticResource CardStyle}" Margin="28,16,28,0">
                     <StackPanel>
                         <Grid Margin="0,0,0,4">
                             <Grid.ColumnDefinitions>

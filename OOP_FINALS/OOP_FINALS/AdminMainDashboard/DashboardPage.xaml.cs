@@ -705,12 +705,19 @@ namespace OOP_FINALS.AdminMainDashboard
         {
             try
             {
+                //var tbl = db.ExecuteQueryDataTable(@"
+                //    SELECT TOP 5 ItemName, QuantityInStock, ReorderLevel
+                //    FROM Inventory
+                //    WHERE QuantityInStock <= ReorderLevel
+                //      AND Status = 'Active'
+                //    ORDER BY QuantityInStock ASC");
+
                 var tbl = db.ExecuteQueryDataTable(@"
                     SELECT TOP 5 ItemName, QuantityInStock, ReorderLevel
-                    FROM Inventory
-                    WHERE QuantityInStock <= ReorderLevel
-                      AND Status = 'Active'
-                    ORDER BY QuantityInStock ASC");
+                  FROM Inventory
+                  WHERE QuantityInStock <= ReorderLevel
+                    AND Status = 'NotAvailable'
+                  ORDER BY QuantityInStock ASC");
 
                 InventoryAlertListBox.Items.Clear();
 

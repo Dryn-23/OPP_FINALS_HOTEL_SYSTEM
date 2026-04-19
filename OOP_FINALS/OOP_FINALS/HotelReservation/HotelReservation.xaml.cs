@@ -15,12 +15,12 @@ namespace OOP_FINALS.HotelReservation
 {
     public partial class HotelReservation : Window
     {
-        // ── Connection String ─────────────────────────────────────────────────
+        // ── Connection String ──────────────────────────────────────────────
         private const string ConnStr =
             "Server=DESKTOP-51HVDT7;Database=JohnCis_HotelManagement_System;" +
             "Integrated Security=True;TrustServerCertificate=True;";
 
-        // ── SMTP Settings ─────────────────────────────────────────────────────
+        // ── SMTP Settings ──────────────────────────────────────────────────
         private const string SmtpHost = "smtp.gmail.com";
         private const int SmtpPort = 587;
         private const string SmtpUser = "johncislonge@gmail.com";
@@ -28,7 +28,7 @@ namespace OOP_FINALS.HotelReservation
         private const string SmtpFrom = "johncislonge@gmail.com";
         private const string HotelName = "Johncis Lodge";
 
-        // ── State ─────────────────────────────────────────────────────────────
+        // ── State ──────────────────────────────────────────────────────────
         private DispatcherTimer _timer;
         private ObservableCollection<RoomCardViewModel> _roomCards = new ObservableCollection<RoomCardViewModel>();
         private ObservableCollection<RoomViewModel> _rooms = new ObservableCollection<RoomViewModel>();
@@ -36,17 +36,18 @@ namespace OOP_FINALS.HotelReservation
         private ObservableCollection<BillingDetailItem> _billingItems = new ObservableCollection<BillingDetailItem>();
 
         private RoomCardViewModel _selectedRoom = null;
+        private BookingViewModel _extendTarget = null;   // reservation being extended
         private int _currentStep = 1;
         private bool _initializing = true;
 
-        // ── Constructor ───────────────────────────────────────────────────────
+        // ── Constructor ────────────────────────────────────────────────────
         public HotelReservation()
         {
             InitializeComponent();
             _initializing = false;
         }
 
-        // ── Window Loaded ─────────────────────────────────────────────────────
+        // ── Window Loaded ──────────────────────────────────────────────────
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             _initializing = true;
@@ -62,6 +63,8 @@ namespace OOP_FINALS.HotelReservation
             dpCheckOut.SelectedDate = DateTime.Today.AddDays(1);
 
             lvBillingItems.ItemsSource = _billingItems;
+            cmbExtSessions.SelectedIndex = 0;
+
             ShowPanel("newbooking");
             GoToStep(1);
 
@@ -79,14 +82,15 @@ namespace OOP_FINALS.HotelReservation
         private void BtnClose_Click(object sender, RoutedEventArgs e) => Close();
         private void BtnMinimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
 
-        // ═════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════
         // PANEL NAVIGATION
-        // ═════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════
         private void ShowPanel(string panel)
         {
             panelNewBooking.Visibility = Visibility.Collapsed;
             panelBookings.Visibility = Visibility.Collapsed;
             panelRoomMap.Visibility = Visibility.Collapsed;
+            panelExtendStay.Visibility = Visibility.Collapsed;
 
             switch (panel)
             {
@@ -94,16 +98,23 @@ namespace OOP_FINALS.HotelReservation
                     panelNewBooking.Visibility = Visibility.Visible;
                     lblPageTitle.Text = "New Reservation";
                     break;
+
                 case "bookings":
                     panelBookings.Visibility = Visibility.Visible;
                     lblPageTitle.Text = "Active Reservations";
                     LoadBookings();
                     break;
+
                 case "roommap":
                     panelRoomMap.Visibility = Visibility.Visible;
                     lblPageTitle.Text = "Room Map";
                     icRoomsLarge.ItemsSource = _rooms;
                     if (_rooms.Count == 0) LoadRooms();
+                    break;
+
+                case "extendstay":
+                    panelExtendStay.Visibility = Visibility.Visible;
+                    lblPageTitle.Text = "Extend Stay";
                     break;
             }
         }
@@ -112,9 +123,9 @@ namespace OOP_FINALS.HotelReservation
         private void NavRoomMap_Click(object sender, RoutedEventArgs e) => ShowPanel("roommap");
         private void NavBookings_Click(object sender, RoutedEventArgs e) => ShowPanel("bookings");
 
-        // ═════════════════════════════════════════════════════════════════════
-        // STEP WIZARD NAVIGATION
-        // ═════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════
+        // STEP WIZARD
+        // ══════════════════════════════════════════════════════════════════
         private void GoToStep(int step)
         {
             _currentStep = step;
@@ -155,28 +166,26 @@ namespace OOP_FINALS.HotelReservation
             }
             else
             {
-                circle.Background = new SolidColorBrush(Color.FromRgb(0x2A, 0x1E, 0x14));
-                circle.BorderBrush = new SolidColorBrush(Color.FromRgb(0x3A, 0x26, 0x18));
+                circle.Background = new SolidColorBrush(Color.FromRgb(0x2A, 0x1A, 0x0E));
+                circle.BorderBrush = new SolidColorBrush(Color.FromRgb(0x3D, 0x28, 0x10));
                 circle.BorderThickness = new Thickness(1);
-                label.Foreground = new SolidColorBrush(Color.FromRgb(0x6B, 0x4A, 0x10));
+                label.Foreground = new SolidColorBrush(Color.FromRgb(0x4A, 0x30, 0x10));
             }
             label.Text = text;
         }
 
-        // ── Step navigation buttons ───────────────────────────────────────────
+        // ── Step Buttons ───────────────────────────────────────────────────
         private void BtnStep1Next_Click(object sender, RoutedEventArgs e)
         {
-            if (_selectedRoom == null) { Warn("Please select a room first."); return; }
-
+            if (_selectedRoom == null)
+            { Warn("Please select a room first."); return; }
             if (dpCheckIn.SelectedDate == null || dpCheckOut.SelectedDate == null)
             { Warn("Please select valid check-in and check-out dates."); return; }
-
             if (dpCheckOut.SelectedDate.Value <= dpCheckIn.SelectedDate.Value)
             { Warn("Check-out date must be after check-in date."); return; }
 
             lblCheckInDisplay.Text = dpCheckIn.SelectedDate.Value.ToString("MMMM dd, yyyy");
             lblCheckOutDisplay.Text = dpCheckOut.SelectedDate.Value.ToString("MMMM dd, yyyy");
-
             GoToStep(2);
         }
 
@@ -199,9 +208,9 @@ namespace OOP_FINALS.HotelReservation
 
         private void BtnStep3Back_Click(object sender, RoutedEventArgs e) => GoToStep(2);
 
-        // ═════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════
         // CLOCK
-        // ═════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════
         private void StartClock()
         {
             _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
@@ -210,9 +219,9 @@ namespace OOP_FINALS.HotelReservation
             lblClock.Text = DateTime.Now.ToString("ddd, MMM dd yyyy  HH:mm:ss");
         }
 
-        // ═════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════
         // DB HELPERS
-        // ═════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════
         private SqlConnection OpenConnection()
         {
             var conn = new SqlConnection(ConnStr);
@@ -228,13 +237,12 @@ namespace OOP_FINALS.HotelReservation
                 return cmd.ExecuteScalar() ?? 0;
         }
 
-        // ═════════════════════════════════════════════════════════════════════
-        // LOAD – ROOM TYPE FILTER COMBO
-        // ═════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════
+        // LOAD – ROOM TYPE FILTER
+        // ══════════════════════════════════════════════════════════════════
         private void LoadRoomTypeFilter()
         {
-            SqlConnection conn = null;
-            SqlDataReader dr = null;
+            SqlConnection conn = null; SqlDataReader dr = null;
             try
             {
                 conn = OpenConnection();
@@ -246,19 +254,17 @@ namespace OOP_FINALS.HotelReservation
             finally { dr?.Close(); conn?.Close(); }
         }
 
-        // ═════════════════════════════════════════════════════════════════════
-        // LOAD – ROOM CARDS (Step 1)
-        // ═════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════
+        // LOAD – ROOM CARDS
+        // PricePerNight column = price per 3-hour session
+        // ══════════════════════════════════════════════════════════════════
         private void LoadRoomCards(string typeFilter = "")
         {
             _roomCards.Clear();
             _selectedRoom = null;
+            if (selectedRoomBar != null) selectedRoomBar.Visibility = Visibility.Collapsed;
 
-            if (selectedRoomBar != null)
-                selectedRoomBar.Visibility = Visibility.Collapsed;
-
-            SqlConnection conn = null;
-            SqlDataReader dr = null;
+            SqlConnection conn = null; SqlDataReader dr = null;
             try
             {
                 conn = OpenConnection();
@@ -299,25 +305,26 @@ namespace OOP_FINALS.HotelReservation
                         StatusColor = GetStatusColor(status),
                         StatusBadgeBg = GetStatusBadgeBg(status),
                         BackgroundColor = new SolidColorBrush(isAvailable
-                            ? Color.FromArgb(255, 26, 30, 22)
-                            : Color.FromArgb(255, 28, 18, 18)),
+                            ? Color.FromArgb(255, 38, 24, 14)
+                            : Color.FromArgb(255, 30, 18, 14)),
                         BorderColor = GetStatusColor(status),
-                        SelectHint = isAvailable ? "Click to select →" : "Not available",
+                        SelectHint = isAvailable ? "Click to select ↓" : "Not available",
                         HintColor = isAvailable
                             ? new SolidColorBrush(Color.FromRgb(0xC9, 0x92, 0x2A))
-                            : new SolidColorBrush(Color.FromRgb(0x4A, 0x38, 0x28))
+                            : new SolidColorBrush(Color.FromRgb(0x4A, 0x38, 0x28)),
+                        BookBtnVisible = isAvailable ? Visibility.Visible : Visibility.Collapsed,
+                        HintVisible = isAvailable ? Visibility.Collapsed : Visibility.Visible
                     };
 
-                    var capturedCard = card;
+                    var captured = card;
                     card.SelectCommand = new RelayCommand(
-                        o => OnRoomCardClicked(capturedCard),
+                        o => OnRoomCardClicked(captured),
                         o => isAvailable);
 
                     _roomCards.Add(card);
                 }
 
-                if (icRoomCards != null)
-                    icRoomCards.ItemsSource = _roomCards;
+                if (icRoomCards != null) icRoomCards.ItemsSource = _roomCards;
                 if (lblRoomStatus != null)
                     lblRoomStatus.Text = string.Format("Showing {0} room(s)  ·  {1} available", total, avail);
             }
@@ -329,25 +336,29 @@ namespace OOP_FINALS.HotelReservation
         {
             if (!card.IsAvailable) return;
 
+            // Deselect previous
             if (_selectedRoom != null)
             {
                 _selectedRoom.BorderColor = GetStatusColor(_selectedRoom.Status);
-                _selectedRoom.BackgroundColor = new SolidColorBrush(Color.FromArgb(255, 26, 30, 22));
-                _selectedRoom.SelectHint = "Click to select →";
+                _selectedRoom.BackgroundColor = new SolidColorBrush(Color.FromArgb(255, 38, 24, 14));
+                _selectedRoom.SelectHint = "Click to select ↓";
                 _selectedRoom.HintColor = new SolidColorBrush(Color.FromRgb(0xC9, 0x92, 0x2A));
+                _selectedRoom.BookBtnVisible = Visibility.Visible;
                 _selectedRoom.IsSelected = false;
             }
 
             _selectedRoom = card;
             card.BorderColor = new SolidColorBrush(Color.FromRgb(0xC9, 0x92, 0x2A));
-            card.BackgroundColor = new SolidColorBrush(Color.FromArgb(255, 28, 22, 10));
+            card.BackgroundColor = new SolidColorBrush(Color.FromArgb(255, 45, 28, 10));
             card.SelectHint = "✔  Selected";
-            card.HintColor = new SolidColorBrush(Color.FromRgb(0x22, 0xC5, 0x5E));
+            card.HintColor = new SolidColorBrush(Color.FromRgb(0x4C, 0xAF, 0x74));
+            card.BookBtnVisible = Visibility.Collapsed;
+            card.HintVisible = Visibility.Visible;
             card.IsSelected = true;
 
-            lblSelectedRoomSummary.Text =
-                string.Format("Room {0}  ·  {1}  ·  ₱{2:N0}/night",
-                    card.RoomNumber, card.TypeName, card.PricePerNight);
+            // CHANGED label: /3 hrs
+            lblSelectedRoomSummary.Text = string.Format("Room {0}  ·  {1}  ·  ₱{2:N0}/3 hrs",
+                card.RoomNumber, card.TypeName, card.PricePerNight);
             selectedRoomBar.Visibility = Visibility.Visible;
 
             UpdateBillingSummary();
@@ -358,18 +369,17 @@ namespace OOP_FINALS.HotelReservation
             if (_selectedRoom != null)
             {
                 _selectedRoom.BorderColor = GetStatusColor(_selectedRoom.Status);
-                _selectedRoom.BackgroundColor = new SolidColorBrush(Color.FromArgb(255, 26, 30, 22));
-                _selectedRoom.SelectHint = "Click to select →";
+                _selectedRoom.BackgroundColor = new SolidColorBrush(Color.FromArgb(255, 38, 24, 14));
+                _selectedRoom.SelectHint = "Click to select ↓";
                 _selectedRoom.HintColor = new SolidColorBrush(Color.FromRgb(0xC9, 0x92, 0x2A));
+                _selectedRoom.BookBtnVisible = Visibility.Visible;
                 _selectedRoom.IsSelected = false;
                 _selectedRoom = null;
             }
-            if (selectedRoomBar != null)
-                selectedRoomBar.Visibility = Visibility.Collapsed;
+            if (selectedRoomBar != null) selectedRoomBar.Visibility = Visibility.Collapsed;
         }
 
         private void DateFilter_Changed(object sender, SelectionChangedEventArgs e) => LoadRoomCards(GetTypeFilter());
-
         private void RoomTypeFilter_Changed(object sender, SelectionChangedEventArgs e)
         {
             if (_initializing) return;
@@ -379,17 +389,16 @@ namespace OOP_FINALS.HotelReservation
         private string GetTypeFilter()
         {
             var item = cmbRoomTypeFilter.SelectedItem as ComboBoxItem;
-            return item != null && item.Content != null ? item.Content.ToString() : "All Types";
+            return item?.Content?.ToString() ?? "All Types";
         }
 
-        // ═════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════
         // LOAD – ROOM MAP
-        // ═════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════
         private void LoadRooms()
         {
             _rooms.Clear();
-            SqlConnection conn = null;
-            SqlDataReader dr = null;
+            SqlConnection conn = null; SqlDataReader dr = null;
             try
             {
                 conn = OpenConnection();
@@ -412,7 +421,7 @@ namespace OOP_FINALS.HotelReservation
                         Status = status,
                         StatusColor = GetStatusColor(status),
                         StatusBadgeBg = GetStatusBadgeBg(status),
-                        BackgroundColor = new SolidColorBrush(Color.FromArgb(255, 30, 22, 16)),
+                        BackgroundColor = new SolidColorBrush(Color.FromArgb(255, 38, 24, 14)),
                         BorderColor = GetStatusColor(status)
                     });
                 }
@@ -422,14 +431,13 @@ namespace OOP_FINALS.HotelReservation
             finally { dr?.Close(); conn?.Close(); }
         }
 
-        // ═════════════════════════════════════════════════════════════════════
-        // LOAD – STAFF COMBO
-        // ═════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════
+        // LOAD – STAFF
+        // ══════════════════════════════════════════════════════════════════
         private void LoadStaff()
         {
             cmbStaff.Items.Clear();
-            SqlConnection conn = null;
-            SqlDataReader dr = null;
+            SqlConnection conn = null; SqlDataReader dr = null;
             try
             {
                 conn = OpenConnection();
@@ -449,45 +457,43 @@ namespace OOP_FINALS.HotelReservation
                 {
                     cmbStaff.SelectedIndex = 0;
                     var item = (ComboBoxItem)cmbStaff.SelectedItem;
-                    string content = item.Content != null ? item.Content.ToString() : "";
-                    lblStaffName.Text = content.Contains("(") ? content.Split('(')[0].Trim() : content;
-                    lblStaffRole.Text = content.Contains("(") ? content.Split('(')[1].TrimEnd(')') : "Staff";
+                    string cnt = item.Content?.ToString() ?? "";
+                    lblStaffName.Text = cnt.Contains("(") ? cnt.Split('(')[0].Trim() : cnt;
+                    lblStaffRole.Text = cnt.Contains("(") ? cnt.Split('(')[1].TrimEnd(')') : "Staff";
                 }
             }
             catch (Exception ex) { ShowDbError("LoadStaff", ex); }
             finally { dr?.Close(); conn?.Close(); }
         }
 
-        // ═════════════════════════════════════════════════════════════════════
-        // LOAD – BOOKINGS LIST
-        // ═════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════
+        // LOAD – BOOKINGS
+        // ══════════════════════════════════════════════════════════════════
         private void LoadBookings(string filter = "")
         {
             _bookings.Clear();
-            SqlConnection conn = null;
-            SqlDataReader dr = null;
+            SqlConnection conn = null; SqlDataReader dr = null;
             try
             {
                 conn = OpenConnection();
-                // ── Includes PaymentDate so the receipt can show exact payment timestamp ──
                 string sql = @"
                     SELECT r.ReservationID,
-                           c.FirstName + ' ' + c.LastName  AS GuestName,
+                           c.FirstName + ' ' + c.LastName AS GuestName,
                            rm.RoomNumber,
-                           rt.TypeName                      AS RoomType,
+                           rt.TypeName                     AS RoomType,
                            r.CheckInDate,
                            r.CheckOutDate,
                            r.NumberOfGuest,
                            b.FinalAmount,
                            r.ReservationStatus,
                            p.PaymentStatus,
-                           p.PaymentDate                   -- ← exact payment timestamp
+                           p.PaymentDate
                     FROM   Reservations r
-                    JOIN   Customers  c  ON c.CustomerID   = r.CustomerID
-                    JOIN   Rooms      rm ON rm.RoomID       = r.RoomID
-                    JOIN   RoomTypes  rt ON rt.RoomTypeID   = rm.RoomTypeID
-                    LEFT JOIN Billing b  ON b.ReservationID = r.ReservationID
-                    LEFT JOIN Payment p  ON p.ReservationID = r.ReservationID
+                    JOIN   Customers  c  ON c.CustomerID    = r.CustomerID
+                    JOIN   Rooms      rm ON rm.RoomID        = r.RoomID
+                    JOIN   RoomTypes  rt ON rt.RoomTypeID    = rm.RoomTypeID
+                    LEFT JOIN Billing b  ON b.ReservationID  = r.ReservationID
+                    LEFT JOIN Payment p  ON p.ReservationID  = r.ReservationID
                     WHERE  r.ReservationStatus <> 'Cancelled'";
 
                 if (!string.IsNullOrWhiteSpace(filter))
@@ -504,11 +510,9 @@ namespace OOP_FINALS.HotelReservation
                 dr = cmd.ExecuteReader();
                 while (dr.Read())
                 {
-                    // ── Format PaymentDate: show exact date+time if available ──
                     string payDate = "—";
                     if (dr["PaymentDate"] != DBNull.Value)
-                        payDate = Convert.ToDateTime(dr["PaymentDate"])
-                                         .ToString("MM/dd/yyyy HH:mm");
+                        payDate = Convert.ToDateTime(dr["PaymentDate"]).ToString("MM/dd/yyyy HH:mm");
 
                     _bookings.Add(new BookingViewModel
                     {
@@ -520,25 +524,24 @@ namespace OOP_FINALS.HotelReservation
                         CheckOut = Convert.ToDateTime(dr["CheckOutDate"]).ToString("MM/dd/yyyy"),
                         Guests = dr["NumberOfGuest"].ToString(),
                         Total = dr["FinalAmount"] == DBNull.Value
-                                            ? "—"
-                                            : string.Format("₱{0:N2}", Convert.ToDecimal(dr["FinalAmount"])),
+                                          ? "—"
+                                          : string.Format("₱{0:N2}", Convert.ToDecimal(dr["FinalAmount"])),
                         Status = dr["ReservationStatus"].ToString(),
-                        PaymentStatus = dr["PaymentStatus"] == DBNull.Value
-                                            ? "Unpaid"
-                                            : dr["PaymentStatus"].ToString(),
-                        PaymentDate = payDate   // exact timestamp
+                        PaymentStatus = dr["PaymentStatus"] == DBNull.Value ? "Unpaid" : dr["PaymentStatus"].ToString(),
+                        PaymentDate = payDate,
+                        // Store raw checkout for extension use
+                        RawCheckOut = Convert.ToDateTime(dr["CheckOutDate"])
                     });
                 }
-
                 lvBookings.ItemsSource = _bookings;
             }
             catch (Exception ex) { ShowDbError("LoadBookings", ex); }
             finally { dr?.Close(); conn?.Close(); }
         }
 
-        // ═════════════════════════════════════════════════════════════════════
-        // DASHBOARD STATS
-        // ═════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════
+        // DASHBOARD
+        // ══════════════════════════════════════════════════════════════════
         private void RefreshDashboard()
         {
             SqlConnection conn = null;
@@ -565,25 +568,26 @@ namespace OOP_FINALS.HotelReservation
             finally { conn?.Close(); }
         }
 
-        // ═════════════════════════════════════════════════════════════════════
-        // BILLING PREVIEW (Step 3)
-        // ═════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════
+        // BILLING SUMMARY
+        // Each "session" = 3 hrs. PricePerNight = rate per session.
+        // Sessions = day difference between check-in and check-out.
+        // ══════════════════════════════════════════════════════════════════
         private void UpdateBillingSummary()
         {
             if (_selectedRoom == null || lblTotal == null) return;
 
             decimal rate = _selectedRoom.PricePerNight;
-            int nights = 0;
+            int sessions = 0;
 
             if (dpCheckIn.SelectedDate.HasValue && dpCheckOut.SelectedDate.HasValue)
-                nights = Math.Max(0, (dpCheckOut.SelectedDate.Value - dpCheckIn.SelectedDate.Value).Days);
+                sessions = Math.Max(0, (dpCheckOut.SelectedDate.Value - dpCheckIn.SelectedDate.Value).Days);
 
-            decimal subtotal = rate * nights;
+            decimal subtotal = rate * sessions;
             decimal tax = subtotal * 0.12m;
 
             decimal discount = 0;
-            if (txtDiscount != null)
-                decimal.TryParse(txtDiscount.Text, out discount);
+            if (txtDiscount != null) decimal.TryParse(txtDiscount.Text, out discount);
             discount = Math.Max(0, discount);
 
             decimal total = Math.Max(0, subtotal + tax - discount);
@@ -596,8 +600,9 @@ namespace OOP_FINALS.HotelReservation
                 summDates.Text = string.Format("{0:MMM dd, yyyy}  →  {1:MMM dd, yyyy}",
                     dpCheckIn.SelectedDate.Value, dpCheckOut.SelectedDate.Value);
 
+            // CHANGED labels: Rate/3 hrs, Sessions
             lblRoomRate.Text = string.Format("₱{0:N2}", rate);
-            lblNights.Text = nights.ToString();
+            lblNights.Text = sessions.ToString();
             lblSubtotal.Text = string.Format("₱{0:N2}", subtotal);
             lblTax.Text = string.Format("₱{0:N2}", tax);
             lblDiscount.Text = string.Format("-₱{0:N2}", discount);
@@ -607,13 +612,11 @@ namespace OOP_FINALS.HotelReservation
         }
 
         private void Discount_Changed(object sender, TextChangedEventArgs e) => UpdateBillingSummary();
-
         private void AmountPaid_Changed(object sender, TextChangedEventArgs e)
         {
             if (lblTotal == null) return;
             string raw = lblTotal.Text.Replace("₱", "").Replace(",", "");
-            if (decimal.TryParse(raw, out decimal total))
-                UpdatePaymentStatus(total);
+            if (decimal.TryParse(raw, out decimal total)) UpdatePaymentStatus(total);
         }
 
         private void UpdatePaymentStatus(decimal total)
@@ -626,23 +629,23 @@ namespace OOP_FINALS.HotelReservation
             if (paid >= total && total > 0)
             {
                 lblPaymentStatus.Text = "✔  Fully Paid";
-                lblPaymentStatus.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xC5, 0x5E));
+                lblPaymentStatus.Foreground = new SolidColorBrush(Color.FromRgb(0x4C, 0xAF, 0x74));
             }
             else if (paid > 0)
             {
                 lblPaymentStatus.Text = string.Format("⚠  Partial — Balance: ₱{0:N2}", total - paid);
-                lblPaymentStatus.Foreground = new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B));
+                lblPaymentStatus.Foreground = new SolidColorBrush(Color.FromRgb(0xE0, 0x90, 0x40));
             }
             else
             {
                 lblPaymentStatus.Text = "— Enter amount above";
-                lblPaymentStatus.Foreground = new SolidColorBrush(Color.FromRgb(0x6B, 0x4A, 0x10));
+                lblPaymentStatus.Foreground = new SolidColorBrush(Color.FromRgb(0x4A, 0x30, 0x10));
             }
         }
 
-        // ═════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════
         // ADD BILLING ITEM
-        // ═════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════
         private void AddBillingItem_Click(object sender, RoutedEventArgs e)
         {
             string desc = txtItemDesc.Text.Trim();
@@ -666,12 +669,13 @@ namespace OOP_FINALS.HotelReservation
             txtItemDesc.Text = txtItemQty.Text = txtItemPrice.Text = "";
         }
 
-        // ═════════════════════════════════════════════════════════════════════
-        // CONFIRM BOOKING — Full DB Transaction with Rollback / Commit
-        // ═════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════
+        // CONFIRM BOOKING
+        // ══════════════════════════════════════════════════════════════════
         private void BtnBook_Click(object sender, RoutedEventArgs e)
         {
-            if (cmbPaymentMethod.SelectedItem == null) { Warn("Please select a payment method."); return; }
+            if (cmbPaymentMethod.SelectedItem == null)
+            { Warn("Please select a payment method."); return; }
 
             decimal amountPaid = 0;
             if (!string.IsNullOrWhiteSpace(txtAmountPaid.Text) &&
@@ -688,17 +692,15 @@ namespace OOP_FINALS.HotelReservation
             int guests = int.Parse(((ComboBoxItem)cmbGuests.SelectedItem).Content.ToString());
             DateTime checkIn = dpCheckIn.SelectedDate.Value;
             DateTime checkOut = dpCheckOut.SelectedDate.Value;
-            int nights = (checkOut - checkIn).Days;
+            int sessions = (checkOut - checkIn).Days;
             string idType = ((ComboBoxItem)cmbIDType.SelectedItem).Content.ToString();
             string payMethod = ((ComboBoxItem)cmbPaymentMethod.SelectedItem).Content.ToString();
             decimal rate = _selectedRoom.PricePerNight;
-            decimal subtotal = rate * nights;
+            decimal subtotal = rate * sessions;
             decimal tax = subtotal * 0.12m;
             decimal total = Math.Max(0, subtotal + tax - discount);
             string payStatus = amountPaid >= total ? "Paid" : amountPaid > 0 ? "Partial" : "Unpaid";
-
-            // ── Capture exact payment timestamp at the moment the user clicks Confirm ──
-            DateTime paymentDate = DateTime.Now;
+            DateTime payDate = DateTime.Now;
 
             SqlConnection conn = null;
             SqlTransaction tx = null;
@@ -706,79 +708,76 @@ namespace OOP_FINALS.HotelReservation
             {
                 conn = OpenConnection();
 
-                // ── Pre-transaction: double-check availability ──────────────
-                using (var checkAvail = new SqlCommand(
-                    "SELECT Status FROM Rooms WHERE RoomID = @rid", conn))
+                // Pre-check availability
+                using (var chk = new SqlCommand("SELECT Status FROM Rooms WHERE RoomID = @rid", conn))
                 {
-                    checkAvail.Parameters.AddWithValue("@rid", roomId);
-                    var statusObj = checkAvail.ExecuteScalar();
-                    if (statusObj == null || statusObj.ToString() != "Available")
+                    chk.Parameters.AddWithValue("@rid", roomId);
+                    var st = chk.ExecuteScalar();
+                    if (st == null || st.ToString() != "Available")
                     {
-                        Warn(string.Format(
-                            "Room {0} is no longer available ({1}). Please select another room.",
-                            _selectedRoom.RoomNumber, statusObj));
+                        Warn(string.Format("Room {0} is no longer available ({1}). Please select another room.",
+                            _selectedRoom.RoomNumber, st));
                         LoadRoomCards(GetTypeFilter());
                         GoToStep(1);
                         return;
                     }
                 }
 
-                // ── BEGIN TRANSACTION ──────────────────────────────────────
                 tx = conn.BeginTransaction(System.Data.IsolationLevel.ReadCommitted);
 
-                // 1. Upsert Customer ────────────────────────────────────────
+                // 1. Upsert Customer
                 int customerId;
-                using (var cmdCheck = new SqlCommand(
+                using (var cmdChk = new SqlCommand(
                     "SELECT CustomerID FROM Customers WHERE ContactNumber = @contact", conn, tx))
                 {
-                    cmdCheck.Parameters.AddWithValue("@contact", txtContactNumber.Text.Trim());
-                    var custObj = cmdCheck.ExecuteScalar();
+                    cmdChk.Parameters.AddWithValue("@contact", txtContactNumber.Text.Trim());
+                    var obj = cmdChk.ExecuteScalar();
 
-                    if (custObj != null && custObj != DBNull.Value)
+                    if (obj != null && obj != DBNull.Value)
                     {
-                        customerId = Convert.ToInt32(custObj);
-                        using (var cmdUpd = new SqlCommand(@"
+                        customerId = Convert.ToInt32(obj);
+                        using (var u = new SqlCommand(@"
                             UPDATE Customers
-                            SET FirstName=@fn, LastName=@ln, Email=@em,
-                                ValidIDType=@idt, ValidIDNumber=@idn
+                            SET FirstName=@fn,LastName=@ln,Email=@em,
+                                ValidIDType=@idt,ValidIDNumber=@idn
                             WHERE CustomerID=@cid", conn, tx))
                         {
-                            cmdUpd.Parameters.AddWithValue("@fn", txtFirstName.Text.Trim());
-                            cmdUpd.Parameters.AddWithValue("@ln", txtLastName.Text.Trim());
-                            cmdUpd.Parameters.AddWithValue("@em", txtEmail.Text.Trim());
-                            cmdUpd.Parameters.AddWithValue("@idt", idType);
-                            cmdUpd.Parameters.AddWithValue("@idn", txtIDNumber.Text.Trim());
-                            cmdUpd.Parameters.AddWithValue("@cid", customerId);
-                            cmdUpd.ExecuteNonQuery();
+                            u.Parameters.AddWithValue("@fn", txtFirstName.Text.Trim());
+                            u.Parameters.AddWithValue("@ln", txtLastName.Text.Trim());
+                            u.Parameters.AddWithValue("@em", txtEmail.Text.Trim());
+                            u.Parameters.AddWithValue("@idt", idType);
+                            u.Parameters.AddWithValue("@idn", txtIDNumber.Text.Trim());
+                            u.Parameters.AddWithValue("@cid", customerId);
+                            u.ExecuteNonQuery();
                         }
                     }
                     else
                     {
-                        using (var cmdIns = new SqlCommand(@"
+                        using (var ins = new SqlCommand(@"
                             INSERT INTO Customers
-                                   (FirstName, LastName, ContactNumber, Email, ValidIDType, ValidIDNumber)
+                                   (FirstName,LastName,ContactNumber,Email,ValidIDType,ValidIDNumber)
                             OUTPUT INSERTED.CustomerID
-                            VALUES (@fn, @ln, @contact, @em, @idt, @idn)", conn, tx))
+                            VALUES (@fn,@ln,@contact,@em,@idt,@idn)", conn, tx))
                         {
-                            cmdIns.Parameters.AddWithValue("@fn", txtFirstName.Text.Trim());
-                            cmdIns.Parameters.AddWithValue("@ln", txtLastName.Text.Trim());
-                            cmdIns.Parameters.AddWithValue("@contact", txtContactNumber.Text.Trim());
-                            cmdIns.Parameters.AddWithValue("@em", txtEmail.Text.Trim());
-                            cmdIns.Parameters.AddWithValue("@idt", idType);
-                            cmdIns.Parameters.AddWithValue("@idn", txtIDNumber.Text.Trim());
-                            customerId = (int)cmdIns.ExecuteScalar();
+                            ins.Parameters.AddWithValue("@fn", txtFirstName.Text.Trim());
+                            ins.Parameters.AddWithValue("@ln", txtLastName.Text.Trim());
+                            ins.Parameters.AddWithValue("@contact", txtContactNumber.Text.Trim());
+                            ins.Parameters.AddWithValue("@em", txtEmail.Text.Trim());
+                            ins.Parameters.AddWithValue("@idt", idType);
+                            ins.Parameters.AddWithValue("@idn", txtIDNumber.Text.Trim());
+                            customerId = (int)ins.ExecuteScalar();
                         }
                     }
                 }
 
-                // 2. Insert Reservation ────────────────────────────────────
+                // 2. Insert Reservation
                 int reservationId;
                 using (var cmdRes = new SqlCommand(@"
                     INSERT INTO Reservations
-                           (CustomerID, RoomID, CheckInDate, CheckOutDate,
-                            NumberOfGuest, ReservationDate, ReservationStatus, CreatedBy)
+                           (CustomerID,RoomID,CheckInDate,CheckOutDate,
+                            NumberOfGuest,ReservationDate,ReservationStatus,CreatedBy)
                     OUTPUT INSERTED.ReservationID
-                    VALUES (@cid, @rid, @ci, @co, @ng, GETDATE(), 'Confirmed', @sid)", conn, tx))
+                    VALUES (@cid,@rid,@ci,@co,@ng,GETDATE(),'Confirmed',@sid)", conn, tx))
                 {
                     cmdRes.Parameters.AddWithValue("@cid", customerId);
                     cmdRes.Parameters.AddWithValue("@rid", roomId);
@@ -789,13 +788,13 @@ namespace OOP_FINALS.HotelReservation
                     reservationId = (int)cmdRes.ExecuteScalar();
                 }
 
-                // 3. Insert Billing ────────────────────────────────────────
+                // 3. Insert Billing
                 int billingId;
                 using (var cmdBill = new SqlCommand(@"
                     INSERT INTO Billing
-                           (ReservationID, TotalAmount, TaxAmount, DiscountAmount, FinalAmount, BillingStatus)
+                           (ReservationID,TotalAmount,TaxAmount,DiscountAmount,FinalAmount,BillingStatus)
                     OUTPUT INSERTED.BillingID
-                    VALUES (@rid, @sub, @tax, @disc, @total, 'Active')", conn, tx))
+                    VALUES (@rid,@sub,@tax,@disc,@total,'Active')", conn, tx))
                 {
                     cmdBill.Parameters.AddWithValue("@rid", reservationId);
                     cmdBill.Parameters.AddWithValue("@sub", subtotal);
@@ -805,18 +804,17 @@ namespace OOP_FINALS.HotelReservation
                     billingId = (int)cmdBill.ExecuteScalar();
                 }
 
-                // 4. Insert Billing_Details ────────────────────────────────
-                InsertBillingDetail(conn, tx, billingId, "Room Charge", nights, rate);
+                // 4. Billing Details
+                InsertBillingDetail(conn, tx, billingId, "Room Charge (3-hr session)", sessions, rate);
                 foreach (var item in _billingItems)
                     InsertBillingDetail(conn, tx, billingId, item.Description, item.RawQty, item.RawUnitPrice);
 
-                // 5. Insert Payment — PaymentDate is the exact CURRENT DATETIME
-                //    Column must allow NULL so "Unpaid" rows can omit it.
+                // 5. Payment
                 using (var cmdPay = new SqlCommand(@"
                     INSERT INTO Payment
-                           (ReservationID, AmountPaid, PaymentMethod,
-                            PaymentReferenceNumber, PaymentStatus, PaymentDate)
-                    VALUES (@rid, @amt, @meth, @ref, @pst, @pdt)", conn, tx))
+                           (ReservationID,AmountPaid,PaymentMethod,
+                            PaymentReferenceNumber,PaymentStatus,PaymentDate)
+                    VALUES (@rid,@amt,@meth,@ref,@pst,@pdt)", conn, tx))
                 {
                     cmdPay.Parameters.AddWithValue("@rid", reservationId);
                     cmdPay.Parameters.AddWithValue("@amt", amountPaid);
@@ -826,68 +824,48 @@ namespace OOP_FINALS.HotelReservation
                             ? (object)DBNull.Value
                             : txtPaymentRef.Text.Trim());
                     cmdPay.Parameters.AddWithValue("@pst", payStatus);
-                    // ── Only store a timestamp when money was actually received ──
                     cmdPay.Parameters.AddWithValue("@pdt",
-                        amountPaid > 0 ? (object)paymentDate : DBNull.Value);
+                        amountPaid > 0 ? (object)payDate : DBNull.Value);
                     cmdPay.ExecuteNonQuery();
                 }
 
-                // 6. Mark room Occupied ────────────────────────────────────
-                using (var cmdRoom = new SqlCommand(
-                    "UPDATE Rooms SET Status='Occupied' WHERE RoomID=@rid", conn, tx))
-                {
-                    cmdRoom.Parameters.AddWithValue("@rid", roomId);
-                    cmdRoom.ExecuteNonQuery();
-                }
+                // 6. Mark Occupied
+                new SqlCommand("UPDATE Rooms SET Status='Occupied' WHERE RoomID=@rid", conn, tx)
+                    .WithParam("@rid", roomId).ExecuteNonQuery();
 
-                // ── COMMIT ─────────────────────────────────────────────────
                 tx.Commit();
 
-                // ── Post-commit: send email (best-effort, outside transaction) ──
                 string guestEmail = txtEmail.Text.Trim();
                 string guestName = string.Format("{0} {1}", txtFirstName.Text.Trim(), txtLastName.Text.Trim());
                 string roomLabel = string.Format("Room {0} — {1}", _selectedRoom.RoomNumber, _selectedRoom.TypeName);
 
                 TrySendConfirmationEmail(guestEmail, guestName, reservationId, roomLabel,
-                    checkIn, checkOut, nights, total, amountPaid, payStatus, paymentDate);
+                    checkIn, checkOut, sessions, total, amountPaid, payStatus, payDate);
 
                 PopulateReceipt(reservationId, guestName, guestEmail, roomLabel,
-                    checkIn, checkOut, nights, total, amountPaid, payStatus, paymentDate);
+                    checkIn, checkOut, sessions, total, amountPaid, payStatus, payDate);
 
                 LoadRoomCards(GetTypeFilter());
                 LoadRooms();
                 LoadBookings();
                 RefreshDashboard();
                 _billingItems.Clear();
-
                 GoToStep(4);
             }
             catch (Exception ex)
             {
-                // ── ROLLBACK on any failure ────────────────────────────────
-                if (tx != null)
-                {
-                    try { tx.Rollback(); }
-                    catch (Exception rbEx)
-                    {
-                        ShowDbError("ROLLBACK failed", rbEx);
-                    }
-                }
-                ShowDbError("BtnBook_Click — Transaction rolled back. No changes were saved.", ex);
+                if (tx != null) try { tx.Rollback(); } catch { }
+                ShowDbError("BtnBook_Click — Transaction rolled back.", ex);
             }
-            finally
-            {
-                tx?.Dispose();
-                conn?.Close();
-            }
+            finally { tx?.Dispose(); conn?.Close(); }
         }
 
         private static void InsertBillingDetail(SqlConnection conn, SqlTransaction tx,
             int billingId, string description, int qty, decimal unitPrice)
         {
             using (var cmd = new SqlCommand(@"
-                INSERT INTO Billing_Details (BillingID, Description, Quantity, UnitPrice, Subtotal)
-                VALUES (@bid, @desc, @qty, @up, @sub)", conn, tx))
+                INSERT INTO Billing_Details (BillingID,Description,Quantity,UnitPrice,Subtotal)
+                VALUES (@bid,@desc,@qty,@up,@sub)", conn, tx))
             {
                 cmd.Parameters.AddWithValue("@bid", billingId);
                 cmd.Parameters.AddWithValue("@desc", description);
@@ -898,11 +876,11 @@ namespace OOP_FINALS.HotelReservation
             }
         }
 
-        // ═════════════════════════════════════════════════════════════════════
-        // RECEIPT DISPLAY (Step 4) — now includes PaymentDate
-        // ═════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════
+        // RECEIPT (Step 4)
+        // ══════════════════════════════════════════════════════════════════
         private void PopulateReceipt(int resId, string guest, string email, string room,
-            DateTime checkIn, DateTime checkOut, int nights, decimal total,
+            DateTime checkIn, DateTime checkOut, int sessions, decimal total,
             decimal amountPaid, string payStatus, DateTime paymentDate)
         {
             rcptResID.Text = string.Format("#RES-{0:D5}", resId);
@@ -911,25 +889,21 @@ namespace OOP_FINALS.HotelReservation
             rcptRoom.Text = room;
             rcptCheckIn.Text = checkIn.ToString("MMMM dd, yyyy");
             rcptCheckOut.Text = checkOut.ToString("MMMM dd, yyyy");
-            rcptNights.Text = nights.ToString();
+            rcptNights.Text = sessions.ToString();
             rcptTotal.Text = string.Format("₱{0:N2}", total);
             rcptAmountPaid.Text = string.Format("₱{0:N2}", amountPaid);
             rcptPayStatus.Text = payStatus;
 
-            // ── Show PaymentDate only when money was actually received ──
-            //if (rcptPaymentDate != null)
-            //{
-            //    rcptPaymentDate.Text = amountPaid > 0
-            //        ? paymentDate.ToString("MMMM dd, yyyy  HH:mm:ss")
-            //        : "—";
-            //}
+            if (rcptPaymentDate != null)
+                rcptPaymentDate.Text = amountPaid > 0
+                    ? paymentDate.ToString("MMMM dd, yyyy  HH:mm:ss")
+                    : "—";
 
-            if (payStatus == "Paid")
-                rcptPayStatus.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xC5, 0x5E));
-            else if (payStatus == "Partial")
-                rcptPayStatus.Foreground = new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B));
-            else
-                rcptPayStatus.Foreground = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44));
+            rcptPayStatus.Foreground = payStatus == "Paid"
+                ? new SolidColorBrush(Color.FromRgb(0x4C, 0xAF, 0x74))
+                : payStatus == "Partial"
+                    ? new SolidColorBrush(Color.FromRgb(0xE0, 0x90, 0x40))
+                    : new SolidColorBrush(Color.FromRgb(0xE0, 0x55, 0x55));
 
             lblConfirmSubtitle.Text = string.Format("A confirmation email has been sent to {0}", email);
         }
@@ -942,24 +916,312 @@ namespace OOP_FINALS.HotelReservation
             GoToStep(1);
         }
 
-        // ═════════════════════════════════════════════════════════════════════
-        // EMAIL  (PaymentDate passed through for email body)
-        // ═════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════
+        // EXTEND STAY  — full dedicated panel
+        // ══════════════════════════════════════════════════════════════════
+        private void BtnExtendStay_Click(object sender, RoutedEventArgs e)
+        {
+            // If a booking is already selected in the list, go straight to the form
+            var sel = lvBookings.SelectedItem as BookingViewModel;
+            if (sel != null && sel.Status == "Confirmed")
+            {
+                LoadExtendPanel(sel);
+                return;
+            }
+
+            // Otherwise open bookings first so the user can pick one
+            ShowPanel("bookings");
+            Warn("Select a Confirmed reservation from the list below, then click '📅 Extend Stay' again.");
+        }
+
+        private void LoadExtendPanel(BookingViewModel bvm)
+        {
+            _extendTarget = bvm;
+
+            // Populate current booking info labels
+            extResID.Text = string.Format("#RES-{0:D5}", bvm.ReservationID);
+            extGuestName.Text = bvm.GuestName;
+            extRoomInfo.Text = string.Format("Room {0}  ·  {1}", bvm.RoomNumber, bvm.RoomType);
+            extCurrentCheckOut.Text = bvm.RawCheckOut.ToString("MMMM dd, yyyy");
+
+            // Reset extension form
+            cmbExtSessions.SelectedIndex = 0;
+            cmbExtPayMethod.SelectedIndex = 0;
+            txtExtPayRef.Text = "";
+            txtExtDiscount.Text = "0";
+            txtExtAmountPaid.Text = "";
+            lblExtPayStatus.Text = "— Enter amount above";
+            lblExtPayStatus.Foreground = new SolidColorBrush(Color.FromRgb(0x4A, 0x30, 0x10));
+
+            // Fetch rate from DB
+            LoadExtendRate(bvm.ReservationID);
+
+            ShowPanel("extendstay");
+        }
+
+        private decimal _extRatePerSession = 0;
+
+        private void LoadExtendRate(int reservationId)
+        {
+            SqlConnection conn = null;
+            try
+            {
+                conn = OpenConnection();
+                using (var cmd = new SqlCommand(@"
+                    SELECT rt.PricePerNight
+                    FROM   Reservations r
+                    JOIN   Rooms rm     ON rm.RoomID     = r.RoomID
+                    JOIN   RoomTypes rt ON rt.RoomTypeID = rm.RoomTypeID
+                    WHERE  r.ReservationID = @rid", conn))
+                {
+                    cmd.Parameters.AddWithValue("@rid", reservationId);
+                    var obj = cmd.ExecuteScalar();
+                    _extRatePerSession = obj != null && obj != DBNull.Value
+                        ? Convert.ToDecimal(obj) : 0;
+                }
+            }
+            catch { _extRatePerSession = 0; }
+            finally { conn?.Close(); }
+
+            RefreshExtensionSummary();
+        }
+
+        private int GetExtSessions()
+        {
+            // ComboBox items: "1  (3 hrs)", "2  (6 hrs)", ...
+            var item = cmbExtSessions.SelectedItem as ComboBoxItem;
+            if (item == null) return 1;
+            string txt = item.Content.ToString().Trim();
+            if (int.TryParse(txt.Split(' ')[0], out int n)) return n;
+            return 1;
+        }
+
+        private void RefreshExtensionSummary()
+        {
+            if (_extendTarget == null) return;
+
+            int sessions = GetExtSessions();
+            decimal rate = _extRatePerSession;
+            decimal subtotal = rate * sessions;
+            decimal tax = subtotal * 0.12m;
+
+            decimal discount = 0;
+            if (txtExtDiscount != null) decimal.TryParse(txtExtDiscount.Text, out discount);
+            discount = Math.Max(0, discount);
+
+            decimal total = Math.Max(0, subtotal + tax - discount);
+
+            DateTime newCO = _extendTarget.RawCheckOut.AddDays(sessions);
+
+            // Update labels
+            extSummRoom.Text = string.Format("Room {0}", _extendTarget.RoomNumber);
+            extSummType.Text = _extendTarget.RoomType;
+            extSummPeriod.Text = string.Format("{0}  →  {1:MMM dd, yyyy}",
+                _extendTarget.RawCheckOut.ToString("MMM dd, yyyy"), newCO);
+
+            extSummRate.Text = string.Format("₱{0:N2}", rate);
+            extSummSessions.Text = sessions.ToString();
+            extSummSubtotal.Text = string.Format("₱{0:N2}", subtotal);
+            extSummTax.Text = string.Format("₱{0:N2}", tax);
+            extSummDiscount.Text = string.Format("-₱{0:N2}", discount);
+            extSummTotal.Text = string.Format("₱{0:N2}", total);
+
+            if (extNewCheckOut != null)
+                extNewCheckOut.Text = newCO.ToString("MMMM dd, yyyy");
+
+            // Payment status hint
+            UpdateExtPaymentStatus(total);
+        }
+
+        private void UpdateExtPaymentStatus(decimal total)
+        {
+            if (txtExtAmountPaid == null || lblExtPayStatus == null) return;
+
+            decimal paid = 0;
+            decimal.TryParse(txtExtAmountPaid.Text, out paid);
+
+            if (paid >= total && total > 0)
+            {
+                lblExtPayStatus.Text = "✔  Fully Paid";
+                lblExtPayStatus.Foreground = new SolidColorBrush(Color.FromRgb(0x4C, 0xAF, 0x74));
+            }
+            else if (paid > 0)
+            {
+                lblExtPayStatus.Text = string.Format("⚠  Partial — Balance: ₱{0:N2}", total - paid);
+                lblExtPayStatus.Foreground = new SolidColorBrush(Color.FromRgb(0xE0, 0x90, 0x40));
+            }
+            else
+            {
+                lblExtPayStatus.Text = "— Enter amount above";
+                lblExtPayStatus.Foreground = new SolidColorBrush(Color.FromRgb(0x4A, 0x30, 0x10));
+            }
+        }
+
+        private void ExtSessions_Changed(object sender, SelectionChangedEventArgs e) => RefreshExtensionSummary();
+        private void ExtDiscount_Changed(object sender, TextChangedEventArgs e) => RefreshExtensionSummary();
+        private void ExtAmountPaid_Changed(object sender, TextChangedEventArgs e)
+        {
+            if (extSummTotal == null) return;
+            string raw = extSummTotal.Text.Replace("₱", "").Replace(",", "");
+            if (decimal.TryParse(raw, out decimal total)) UpdateExtPaymentStatus(total);
+        }
+
+        private void BtnExtendBack_Click(object sender, RoutedEventArgs e) => ShowPanel("bookings");
+
+        private void BtnConfirmExtension_Click(object sender, RoutedEventArgs e)
+        {
+            if (_extendTarget == null) { Warn("No reservation selected."); return; }
+            if (cmbExtPayMethod.SelectedItem == null) { Warn("Please select a payment method."); return; }
+
+            int sessions = GetExtSessions();
+            decimal rate = _extRatePerSession;
+            decimal subtotal = rate * sessions;
+            decimal tax = subtotal * 0.12m;
+
+            decimal discount = 0;
+            decimal.TryParse(txtExtDiscount.Text, out discount);
+            discount = Math.Max(0, discount);
+
+            decimal total = Math.Max(0, subtotal + tax - discount);
+            decimal paid = 0;
+            if (!string.IsNullOrWhiteSpace(txtExtAmountPaid.Text))
+                decimal.TryParse(txtExtAmountPaid.Text, out paid);
+
+            string payStatus = paid >= total ? "Paid" : paid > 0 ? "Partial" : "Unpaid";
+            DateTime newCheckOut = _extendTarget.RawCheckOut.AddDays(sessions);
+            string payMethod = ((ComboBoxItem)cmbExtPayMethod.SelectedItem).Content.ToString();
+            int resId = _extendTarget.ReservationID;
+
+            // Confirm dialog
+            var result = MessageBox.Show(
+                string.Format(
+                    "Confirm extension for {0}?\n\n" +
+                    "  Room           : {1}\n" +
+                    "  Sessions added : {2} × ₱{3:N2}/3 hrs\n" +
+                    "  New Check-Out  : {4:MMMM dd, yyyy}\n" +
+                    "  Extra Total    : ₱{5:N2}\n" +
+                    "  Amount Paid    : ₱{6:N2}  ({7})",
+                    _extendTarget.GuestName,
+                    _extendTarget.RoomNumber,
+                    sessions, rate,
+                    newCheckOut,
+                    total, paid, payStatus),
+                "Confirm Extension",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Question);
+
+            if (result != MessageBoxResult.Yes) return;
+
+            SqlConnection conn = null;
+            SqlTransaction tx = null;
+            try
+            {
+                conn = OpenConnection();
+                tx = conn.BeginTransaction(System.Data.IsolationLevel.ReadCommitted);
+
+                // 1. Update CheckOutDate
+                new SqlCommand("UPDATE Reservations SET CheckOutDate=@co WHERE ReservationID=@rid", conn, tx)
+                    .WithParam("@co", newCheckOut)
+                    .WithParam("@rid", resId)
+                    .ExecuteNonQuery();
+
+                // 2. Get BillingID
+                int billingId;
+                using (var cmdBid = new SqlCommand(
+                    "SELECT BillingID FROM Billing WHERE ReservationID=@rid", conn, tx))
+                {
+                    cmdBid.Parameters.AddWithValue("@rid", resId);
+                    billingId = Convert.ToInt32(cmdBid.ExecuteScalar());
+                }
+
+                // 3. Update Billing totals
+                using (var cmdBill = new SqlCommand(@"
+                    UPDATE Billing
+                    SET TotalAmount   = TotalAmount   + @extra,
+                        TaxAmount     = TaxAmount     + @tax,
+                        FinalAmount   = FinalAmount   + @total
+                    WHERE BillingID = @bid", conn, tx))
+                {
+                    cmdBill.Parameters.AddWithValue("@extra", subtotal);
+                    cmdBill.Parameters.AddWithValue("@tax", tax);
+                    cmdBill.Parameters.AddWithValue("@total", total);
+                    cmdBill.Parameters.AddWithValue("@bid", billingId);
+                    cmdBill.ExecuteNonQuery();
+                }
+
+                // 4. Billing Detail for the extension
+                InsertBillingDetail(conn, tx, billingId,
+                    string.Format("Stay Extension ({0} session(s) × 3 hrs)", sessions), sessions, rate);
+
+                // 5. Payment record for extension
+                string extRef = string.IsNullOrWhiteSpace(txtExtPayRef.Text)
+                    ? string.Format("EXT-{0}-{1}", resId, DateTime.Now.ToString("yyyyMMddHHmmss"))
+                    : txtExtPayRef.Text.Trim();
+
+                using (var cmdPay = new SqlCommand(@"
+                    INSERT INTO Payment
+                           (ReservationID,AmountPaid,PaymentMethod,
+                            PaymentReferenceNumber,PaymentStatus,PaymentDate)
+                    VALUES (@rid,@amt,@meth,@ref,@pst,@pdt)", conn, tx))
+                {
+                    cmdPay.Parameters.AddWithValue("@rid", resId);
+                    cmdPay.Parameters.AddWithValue("@amt", paid);
+                    cmdPay.Parameters.AddWithValue("@meth", payMethod);
+                    cmdPay.Parameters.AddWithValue("@ref", extRef);
+                    cmdPay.Parameters.AddWithValue("@pst", payStatus);
+                    cmdPay.Parameters.AddWithValue("@pdt",
+                        paid > 0 ? (object)DateTime.Now : DBNull.Value);
+                    cmdPay.ExecuteNonQuery();
+                }
+
+                tx.Commit();
+
+                MessageBox.Show(
+                    string.Format(
+                        "✅  Stay extended successfully!\n\n" +
+                        "  Guest         : {0}\n" +
+                        "  Room          : {1}\n" +
+                        "  New Check-Out : {2:MMMM dd, yyyy}\n" +
+                        "  Extra Charge  : ₱{3:N2}\n" +
+                        "  Paid          : ₱{4:N2}  ({5})",
+                        _extendTarget.GuestName, _extendTarget.RoomNumber,
+                        newCheckOut, total, paid, payStatus),
+                    "Extension Confirmed",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+
+                _extendTarget = null;
+                LoadBookings();
+                RefreshDashboard();
+                ShowPanel("bookings");
+            }
+            catch (Exception ex)
+            {
+                if (tx != null) try { tx.Rollback(); } catch { }
+                ShowDbError("BtnConfirmExtension_Click", ex);
+            }
+            finally { tx?.Dispose(); conn?.Close(); }
+        }
+
+        // ══════════════════════════════════════════════════════════════════
+        // EMAIL
+        // ══════════════════════════════════════════════════════════════════
         private void TrySendConfirmationEmail(string toEmail, string guestName,
             int reservationId, string roomLabel,
             DateTime checkIn, DateTime checkOut,
-            int nights, decimal total, decimal amountPaid, string payStatus,
+            int sessions, decimal total, decimal amountPaid, string payStatus,
             DateTime paymentDate)
         {
             try
             {
                 string body = BuildEmailBody(guestName, reservationId, roomLabel,
-                    checkIn, checkOut, nights, total, amountPaid, payStatus, paymentDate);
+                    checkIn, checkOut, sessions, total, amountPaid, payStatus, paymentDate);
 
                 using (var mail = new MailMessage())
                 {
                     mail.From = new MailAddress(SmtpFrom, HotelName);
-                    mail.Subject = string.Format("[{0}] Booking Confirmation — #RES-{1:D5}", HotelName, reservationId);
+                    mail.Subject = string.Format("[{0}] Booking Confirmation — #RES-{1:D5}",
+                        HotelName, reservationId);
                     mail.Body = body;
                     mail.IsBodyHtml = true;
                     mail.To.Add(toEmail);
@@ -975,14 +1237,14 @@ namespace OOP_FINALS.HotelReservation
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    string.Format("Booking saved successfully, but the confirmation email could not be sent.\n\nReason: {0}", ex.Message),
+                    string.Format("Booking saved, but confirmation email could not be sent.\n\nReason: {0}", ex.Message),
                     "Email Notice", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 
         private static string BuildEmailBody(string guestName, int reservationId,
             string roomLabel, DateTime checkIn, DateTime checkOut,
-            int nights, decimal total, decimal amountPaid, string payStatus,
+            int sessions, decimal total, decimal amountPaid, string payStatus,
             DateTime paymentDate)
         {
             string payDateLine = amountPaid > 0
@@ -992,99 +1254,76 @@ namespace OOP_FINALS.HotelReservation
             return string.Format(@"
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset='utf-8'/>
-  <style>
-    body {{ font-family: 'Segoe UI', Arial, sans-serif; background:#f5f0eb; margin:0; padding:20px; color:#333; }}
-    .card {{ max-width:600px; margin:0 auto; background:#fff; border-radius:12px;
-             box-shadow:0 4px 20px rgba(0,0,0,0.12); overflow:hidden; }}
-    .header {{ background:#1a0f05; padding:30px; text-align:center; }}
-    .header h1 {{ color:#C9922A; margin:0; font-size:22px; letter-spacing:2px; }}
-    .header p  {{ color:#6B4A10; margin:6px 0 0; font-size:13px; }}
-    .body {{ padding:30px; }}
-    .greeting {{ font-size:17px; color:#1a0f05; margin-bottom:20px; }}
-    .res-id {{ text-align:center; background:#fdf6ec; border:2px solid #C9922A;
-               border-radius:10px; padding:16px; margin:20px 0; }}
-    .res-id .label {{ color:#6B4A10; font-size:12px; font-weight:600; text-transform:uppercase; }}
-    .res-id .value {{ color:#C9922A; font-size:28px; font-weight:700; margin-top:4px; }}
-    table {{ width:100%; border-collapse:collapse; margin:16px 0; }}
-    tr:nth-child(even) td {{ background:#fdf8f4; }}
-    td {{ padding:10px 12px; font-size:13px; border-bottom:1px solid #f0e8e0; }}
-    td:first-child {{ color:#6B4A10; font-weight:600; width:40%; }}
-    td:last-child  {{ color:#1a0f05; font-weight:500; }}
-    .total-row td {{ border-top:2px solid #C9922A; font-size:15px; font-weight:700; }}
-    .total-row td:last-child {{ color:#22C55E; }}
-    .footer {{ background:#fdf6ec; padding:20px; text-align:center; color:#6B4A10; font-size:12px; }}
-    .footer strong {{ color:#C9922A; }}
-  </style>
+<head><meta charset='utf-8'/>
+<style>
+  body{{font-family:'Segoe UI',Arial,sans-serif;background:#f5f0eb;margin:0;padding:20px;color:#333}}
+  .card{{max-width:600px;margin:0 auto;background:#fff;border-radius:12px;
+         box-shadow:0 4px 20px rgba(0,0,0,.12);overflow:hidden}}
+  .header{{background:#1a0f05;padding:28px;text-align:center}}
+  .header h1{{color:#C9922A;margin:0;font-size:22px;letter-spacing:2px}}
+  .header p{{color:#6B4A10;margin:6px 0 0;font-size:13px}}
+  .body{{padding:28px}}
+  .greeting{{font-size:17px;color:#1a0f05;margin-bottom:18px}}
+  .res-id{{text-align:center;background:#fdf6ec;border:2px solid #C9922A;
+           border-radius:10px;padding:14px;margin:18px 0}}
+  .res-id .label{{color:#6B4A10;font-size:12px;font-weight:600;text-transform:uppercase}}
+  .res-id .value{{color:#C9922A;font-size:26px;font-weight:700;margin-top:4px}}
+  table{{width:100%;border-collapse:collapse;margin:14px 0}}
+  tr:nth-child(even) td{{background:#fdf8f4}}
+  td{{padding:10px 12px;font-size:13px;border-bottom:1px solid #f0e8e0}}
+  td:first-child{{color:#6B4A10;font-weight:600;width:40%}}
+  td:last-child{{color:#1a0f05;font-weight:500}}
+  .total-row td{{border-top:2px solid #C9922A;font-size:15px;font-weight:700}}
+  .total-row td:last-child{{color:#4CAF74}}
+  .footer{{background:#fdf6ec;padding:18px;text-align:center;color:#6B4A10;font-size:12px}}
+  .footer strong{{color:#C9922A}}
+</style>
 </head>
 <body>
-  <div class='card'>
-    <div class='header'>
-      <h1>JOHNCIS LODGE</h1>
-      <p>Booking Confirmation</p>
+<div class='card'>
+  <div class='header'><h1>JOHNCIS LODGE</h1><p>Booking Confirmation</p></div>
+  <div class='body'>
+    <p class='greeting'>Dear <strong>{0}</strong>,</p>
+    <p>Your reservation has been confirmed. Here are your booking details:</p>
+    <div class='res-id'>
+      <div class='label'>Reservation ID</div>
+      <div class='value'>#RES-{1:D5}</div>
     </div>
-    <div class='body'>
-      <p class='greeting'>Dear <strong>{0}</strong>,</p>
-      <p>Your reservation has been confirmed. Here are your booking details:</p>
-      <div class='res-id'>
-        <div class='label'>Reservation ID</div>
-        <div class='value'>#RES-{1:D5}</div>
-      </div>
-      <table>
-        <tr><td>Room</td><td>{2}</td></tr>
-        <tr><td>Check-In</td><td>{3:MMMM dd, yyyy}</td></tr>
-        <tr><td>Check-Out</td><td>{4:MMMM dd, yyyy}</td></tr>
-        <tr><td>Nights</td><td>{5}</td></tr>
-        <tr><td>Amount Paid</td><td>&#8369;{6:N2}</td></tr>
-        {9}
-        <tr class='total-row'><td>Total Due</td><td>&#8369;{7:N2}</td></tr>
-        <tr><td>Payment Status</td><td><strong>{8}</strong></td></tr>
-      </table>
-      <p style='color:#6B4A10; font-size:13px;'>
-        Please present this email or your Reservation ID at check-in.
-        If you have any questions, please contact our front desk.
-      </p>
-    </div>
-    <div class='footer'>
-      <strong>Johncis Lodge</strong> &middot; Thank you for choosing us!<br/>
-      This is an automated confirmation. Please do not reply to this email.
-    </div>
+    <table>
+      <tr><td>Room</td><td>{2}</td></tr>
+      <tr><td>Check-In</td><td>{3:MMMM dd, yyyy}</td></tr>
+      <tr><td>Check-Out</td><td>{4:MMMM dd, yyyy}</td></tr>
+      <tr><td>Sessions (3 hrs each)</td><td>{5}</td></tr>
+      <tr><td>Amount Paid</td><td>&#8369;{6:N2}</td></tr>
+      {9}
+      <tr class='total-row'><td>Total Due</td><td>&#8369;{7:N2}</td></tr>
+      <tr><td>Payment Status</td><td><strong>{8}</strong></td></tr>
+    </table>
+    <p style='color:#6B4A10;font-size:13px;'>
+      Please present this email or your Reservation ID at check-in.
+    </p>
   </div>
-</body>
-</html>",
-                guestName,      // {0}
-                reservationId,  // {1}
-                roomLabel,      // {2}
-                checkIn,        // {3}
-                checkOut,       // {4}
-                nights,         // {5}
-                amountPaid,     // {6}
-                total,          // {7}
-                payStatus,      // {8}
-                payDateLine);   // {9}
+  <div class='footer'>
+    <strong>Johncis Lodge</strong> &middot; Thank you for choosing us!<br/>
+    This is an automated confirmation. Please do not reply to this email.
+  </div>
+</div>
+</body></html>",
+                guestName, reservationId, roomLabel,
+                checkIn, checkOut, sessions, amountPaid, total, payStatus, payDateLine);
         }
 
-        // ═════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════
         // CLEAR FORM
-        // ═════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════
         private void ClearForm()
         {
-            txtFirstName.Text = "";
-            txtLastName.Text = "";
-            txtContactNumber.Text = "";
-            txtEmail.Text = "";
-            txtIDNumber.Text = "";
-            txtPaymentRef.Text = "";
-            txtAmountPaid.Text = "";
+            txtFirstName.Text = txtLastName.Text = txtContactNumber.Text =
+            txtEmail.Text = txtIDNumber.Text = txtPaymentRef.Text =
+            txtAmountPaid.Text = txtItemDesc.Text = txtItemQty.Text = txtItemPrice.Text = "";
             txtDiscount.Text = "0";
-            txtItemDesc.Text = "";
-            txtItemQty.Text = "";
-            txtItemPrice.Text = "";
 
-            cmbIDType.SelectedIndex = -1;
-            cmbGuests.SelectedIndex = -1;
-            cmbPaymentMethod.SelectedIndex = -1;
+            cmbIDType.SelectedIndex = cmbGuests.SelectedIndex = cmbPaymentMethod.SelectedIndex = -1;
 
             dpCheckIn.SelectedDate = DateTime.Today;
             dpCheckOut.SelectedDate = DateTime.Today.AddDays(1);
@@ -1100,9 +1339,9 @@ namespace OOP_FINALS.HotelReservation
             if (lblTax != null) lblTax.Text = "";
         }
 
-        // ═════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════
         // REFRESH
-        // ═════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════
         private void BtnRefresh_Click(object sender, RoutedEventArgs e)
         {
             LoadRoomCards(GetTypeFilter());
@@ -1111,9 +1350,9 @@ namespace OOP_FINALS.HotelReservation
             RefreshDashboard();
         }
 
-        // ═════════════════════════════════════════════════════════════════════
-        // SEARCH RESERVATION
-        // ═════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════
+        // SEARCH
+        // ══════════════════════════════════════════════════════════════════
         private void BtnSearchReservation_Click(object sender, RoutedEventArgs e)
         {
             string keyword = Microsoft.VisualBasic.Interaction.InputBox(
@@ -1126,125 +1365,107 @@ namespace OOP_FINALS.HotelReservation
             }
         }
 
-        // ═════════════════════════════════════════════════════════════════════
-        // CHECK-OUT GUEST — with BEGIN TRANSACTION / ROLLBACK / COMMIT
-        // ═════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════
+        // CHECK-OUT
+        // ══════════════════════════════════════════════════════════════════
         private void BtnCheckOut_Click(object sender, RoutedEventArgs e)
         {
-            var selected = lvBookings.SelectedItem as BookingViewModel;
-            if (selected == null) { Warn("Select a reservation from the bookings list first."); return; }
-            if (selected.Status != "Confirmed")
-            {
-                Warn(string.Format("Only 'Confirmed' reservations can be checked out.\nCurrent: {0}", selected.Status));
-                return;
-            }
+            var sel = lvBookings.SelectedItem as BookingViewModel;
+            if (sel == null) { Warn("Select a reservation from the bookings list first."); return; }
+            if (sel.Status != "Confirmed")
+            { Warn(string.Format("Only 'Confirmed' reservations can be checked out.\nCurrent: {0}", sel.Status)); return; }
 
             if (MessageBox.Show(
-                string.Format("Check out '{0}' from Room {1}?", selected.GuestName, selected.RoomNumber),
+                string.Format("Check out '{0}' from Room {1}?", sel.GuestName, sel.RoomNumber),
                 "Confirm Check-Out", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
 
-            SqlConnection conn = null;
-            SqlTransaction tx = null;
+            SqlConnection conn = null; SqlTransaction tx = null;
             try
             {
                 conn = OpenConnection();
                 tx = conn.BeginTransaction(System.Data.IsolationLevel.ReadCommitted);
 
-                // Update reservation status
-                new SqlCommand(
-                    "UPDATE Reservations SET ReservationStatus='Checked Out' WHERE ReservationID=@rid",
-                    conn, tx).WithParam("@rid", selected.ReservationID).ExecuteNonQuery();
+                new SqlCommand("UPDATE Reservations SET ReservationStatus='Checked Out' WHERE ReservationID=@rid", conn, tx)
+                    .WithParam("@rid", sel.ReservationID).ExecuteNonQuery();
 
-                // Mark room for cleaning
-                new SqlCommand(
-                    "UPDATE Rooms SET Status='Cleaning' WHERE RoomNumber=@rn",
-                    conn, tx).WithParam("@rn", selected.RoomNumber).ExecuteNonQuery();
+                new SqlCommand("UPDATE Rooms SET Status='Cleaning' WHERE RoomNumber=@rn", conn, tx)
+                    .WithParam("@rn", sel.RoomNumber).ExecuteNonQuery();
 
-                // Insert housekeeping record
                 using (var cmdHk = new SqlCommand(@"
-                    INSERT INTO HouseKeeping (StaffID, RoomID, CleaningDate, CleaningStatus, Notes)
-                    SELECT @sid,
-                           (SELECT RoomID FROM Rooms WHERE RoomNumber = @rn),
-                           CAST(GETDATE() AS DATE), 'Pending', 'Post checkout cleaning'", conn, tx))
+                    INSERT INTO HouseKeeping (StaffID,RoomID,CleaningDate,CleaningStatus,Notes)
+                    SELECT @sid,(SELECT RoomID FROM Rooms WHERE RoomNumber=@rn),
+                           CAST(GETDATE() AS DATE),'Pending','Post checkout cleaning'", conn, tx))
                 {
                     cmdHk.Parameters.AddWithValue("@sid", GetCurrentStaffId());
-                    cmdHk.Parameters.AddWithValue("@rn", selected.RoomNumber);
+                    cmdHk.Parameters.AddWithValue("@rn", sel.RoomNumber);
                     cmdHk.ExecuteNonQuery();
                 }
 
                 tx.Commit();
-
                 MessageBox.Show(
                     string.Format("'{0}' checked out successfully.\nRoom {1} has been queued for cleaning.",
-                        selected.GuestName, selected.RoomNumber),
+                        sel.GuestName, sel.RoomNumber),
                     "Check-Out Successful", MessageBoxButton.OK, MessageBoxImage.Information);
 
                 LoadRoomCards(GetTypeFilter()); LoadRooms(); LoadBookings(); RefreshDashboard();
             }
             catch (Exception ex)
             {
-                if (tx != null)
-                    try { tx.Rollback(); } catch { }
-                ShowDbError("BtnCheckOut_Click — Transaction rolled back", ex);
+                if (tx != null) try { tx.Rollback(); } catch { }
+                ShowDbError("BtnCheckOut_Click", ex);
             }
             finally { tx?.Dispose(); conn?.Close(); }
         }
 
-        // ═════════════════════════════════════════════════════════════════════
-        // CANCEL RESERVATION — with BEGIN TRANSACTION / ROLLBACK / COMMIT
-        // ═════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════
+        // CANCEL
+        // ══════════════════════════════════════════════════════════════════
         private void BtnCancel_Click(object sender, RoutedEventArgs e)
         {
-            var selected = lvBookings.SelectedItem as BookingViewModel;
-            if (selected == null) { Warn("Select a reservation from the bookings list first."); return; }
-            if (selected.Status == "Checked Out") { Warn("Cannot cancel a reservation already checked out."); return; }
+            var sel = lvBookings.SelectedItem as BookingViewModel;
+            if (sel == null) { Warn("Select a reservation from the bookings list first."); return; }
+            if (sel.Status == "Checked Out") { Warn("Cannot cancel a reservation already checked out."); return; }
 
             if (MessageBox.Show(
                 string.Format("Cancel reservation #{0} for '{1}'?\n\nThis cannot be undone.",
-                    selected.ReservationID, selected.GuestName),
+                    sel.ReservationID, sel.GuestName),
                 "Confirm Cancellation", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
 
-            SqlConnection conn = null;
-            SqlTransaction tx = null;
+            SqlConnection conn = null; SqlTransaction tx = null;
             try
             {
                 conn = OpenConnection();
                 tx = conn.BeginTransaction(System.Data.IsolationLevel.ReadCommitted);
 
                 new SqlCommand("UPDATE Reservations SET ReservationStatus='Cancelled' WHERE ReservationID=@rid", conn, tx)
-                    .WithParam("@rid", selected.ReservationID).ExecuteNonQuery();
-
+                    .WithParam("@rid", sel.ReservationID).ExecuteNonQuery();
                 new SqlCommand("UPDATE Billing SET BillingStatus='Cancelled' WHERE ReservationID=@rid", conn, tx)
-                    .WithParam("@rid", selected.ReservationID).ExecuteNonQuery();
-
+                    .WithParam("@rid", sel.ReservationID).ExecuteNonQuery();
                 new SqlCommand("UPDATE Rooms SET Status='Available' WHERE RoomNumber=@rn", conn, tx)
-                    .WithParam("@rn", selected.RoomNumber).ExecuteNonQuery();
+                    .WithParam("@rn", sel.RoomNumber).ExecuteNonQuery();
 
                 tx.Commit();
-
                 MessageBox.Show(
                     string.Format("Reservation #{0} has been cancelled.\nRoom {1} is now available.",
-                        selected.ReservationID, selected.RoomNumber),
+                        sel.ReservationID, sel.RoomNumber),
                     "Reservation Cancelled", MessageBoxButton.OK, MessageBoxImage.Information);
 
                 LoadRoomCards(GetTypeFilter()); LoadRooms(); LoadBookings(); RefreshDashboard();
             }
             catch (Exception ex)
             {
-                if (tx != null)
-                    try { tx.Rollback(); } catch { }
-                ShowDbError("BtnCancel_Click — Transaction rolled back", ex);
+                if (tx != null) try { tx.Rollback(); } catch { }
+                ShowDbError("BtnCancel_Click", ex);
             }
             finally { tx?.Dispose(); conn?.Close(); }
         }
 
-        // ═════════════════════════════════════════════════════════════════════
-        // HOUSEKEEPING — with BEGIN TRANSACTION / ROLLBACK / COMMIT
-        // ═════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════
+        // HOUSEKEEPING
+        // ══════════════════════════════════════════════════════════════════
         private void BtnHousekeeping_Click(object sender, RoutedEventArgs e)
         {
-            SqlConnection conn = null;
-            SqlDataReader dr = null;
+            SqlConnection conn = null; SqlDataReader dr = null;
             try
             {
                 conn = OpenConnection();
@@ -1266,69 +1487,59 @@ namespace OOP_FINALS.HotelReservation
                     hasRows = true;
                     log += string.Format("  Room {0} ({1})  ·  {2:MM/dd/yyyy}\n",
                         dr["RoomNumber"], dr["TypeName"], Convert.ToDateTime(dr["CleaningDate"]));
-                    log += string.Format("  Assigned to: {0}  |  {1}\n\n",
-                        dr["StaffName"], dr["Notes"]);
+                    log += string.Format("  Assigned to: {0}  |  {1}\n\n", dr["StaffName"], dr["Notes"]);
                 }
                 if (!hasRows) log += "  No rooms pending housekeeping.\n";
 
-                dr.Close();
-                dr = null;
+                dr.Close(); dr = null;
 
                 if (MessageBox.Show(
                     log + "\nMark all pending rooms as Cleaned and set status to Available?",
                     "Housekeeping Log", MessageBoxButton.YesNo, MessageBoxImage.Information) != MessageBoxResult.Yes) return;
 
-                SqlTransaction tx = conn.BeginTransaction(System.Data.IsolationLevel.ReadCommitted);
+                var tx2 = conn.BeginTransaction(System.Data.IsolationLevel.ReadCommitted);
                 try
                 {
-                    int updated = new SqlCommand(@"
-                        UPDATE HouseKeeping SET CleaningStatus='Completed'
-                        WHERE  CleaningStatus='Pending'", conn, tx).ExecuteNonQuery();
+                    int updated = new SqlCommand(
+                        "UPDATE HouseKeeping SET CleaningStatus='Completed' WHERE CleaningStatus='Pending'",
+                        conn, tx2).ExecuteNonQuery();
 
-                    new SqlCommand(
-                        "UPDATE Rooms SET Status='Available' WHERE Status='Cleaning'",
-                        conn, tx).ExecuteNonQuery();
+                    new SqlCommand("UPDATE Rooms SET Status='Available' WHERE Status='Cleaning'",
+                        conn, tx2).ExecuteNonQuery();
 
-                    tx.Commit();
-
+                    tx2.Commit();
                     MessageBox.Show(
                         string.Format("{0} housekeeping task(s) completed. Rooms are now Available.", updated),
                         "Housekeeping Done", MessageBoxButton.OK, MessageBoxImage.Information);
 
                     LoadRoomCards(GetTypeFilter()); LoadRooms(); RefreshDashboard();
                 }
-                catch (Exception ex)
-                {
-                    try { tx.Rollback(); } catch { }
-                    ShowDbError("Housekeeping update — Transaction rolled back", ex);
-                }
+                catch (Exception ex) { try { tx2.Rollback(); } catch { } ShowDbError("Housekeeping update", ex); }
             }
             catch (Exception ex) { ShowDbError("BtnHousekeeping_Click", ex); }
             finally { dr?.Close(); conn?.Close(); }
         }
 
-        // ═════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════
         // BOOKINGS LIST EVENTS
-        // ═════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════
         private void LvBookings_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             var sel = lvBookings.SelectedItem as BookingViewModel;
-            if (sel != null && txtSearch != null)
-                txtSearch.Text = sel.GuestName;
+            if (sel != null && txtSearch != null) txtSearch.Text = sel.GuestName;
         }
 
         private void TxtSearch_TextChanged(object sender, TextChangedEventArgs e)
             => LoadBookings(txtSearch.Text.Trim());
 
-        // ═════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════
         // HELPERS
-        // ═════════════════════════════════════════════════════════════════════
+        // ══════════════════════════════════════════════════════════════════
         private int GetCurrentStaffId()
         {
             int id = 0;
             var item = cmbStaff.SelectedItem as ComboBoxItem;
-            if (item != null && item.Tag != null && int.TryParse(item.Tag.ToString(), out id))
-                return id;
+            if (item?.Tag != null && int.TryParse(item.Tag.ToString(), out id)) return id;
             return 1;
         }
 
@@ -1336,10 +1547,10 @@ namespace OOP_FINALS.HotelReservation
         {
             switch (status)
             {
-                case "Available": return new SolidColorBrush(Color.FromRgb(0x22, 0xC5, 0x5E));
-                case "Occupied": return new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44));
-                case "Cleaning": return new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B));
-                case "Maintenance": return new SolidColorBrush(Color.FromRgb(0x55, 0x55, 0x55));
+                case "Available": return new SolidColorBrush(Color.FromRgb(0x4C, 0xAF, 0x74));
+                case "Occupied": return new SolidColorBrush(Color.FromRgb(0xE0, 0x55, 0x55));
+                case "Cleaning": return new SolidColorBrush(Color.FromRgb(0xE0, 0x90, 0x40));
+                case "Maintenance": return new SolidColorBrush(Color.FromRgb(0x66, 0x66, 0x66));
                 default: return new SolidColorBrush(Colors.Gray);
             }
         }
@@ -1348,11 +1559,11 @@ namespace OOP_FINALS.HotelReservation
         {
             switch (status)
             {
-                case "Available": return new SolidColorBrush(Color.FromArgb(35, 0x22, 0xC5, 0x5E));
-                case "Occupied": return new SolidColorBrush(Color.FromArgb(35, 0xEF, 0x44, 0x44));
-                case "Cleaning": return new SolidColorBrush(Color.FromArgb(35, 0xF5, 0x9E, 0x0B));
-                case "Maintenance": return new SolidColorBrush(Color.FromArgb(35, 0x55, 0x55, 0x55));
-                default: return new SolidColorBrush(Color.FromArgb(35, 0x88, 0x88, 0x88));
+                case "Available": return new SolidColorBrush(Color.FromArgb(40, 0x4C, 0xAF, 0x74));
+                case "Occupied": return new SolidColorBrush(Color.FromArgb(40, 0xE0, 0x55, 0x55));
+                case "Cleaning": return new SolidColorBrush(Color.FromArgb(40, 0xE0, 0x90, 0x40));
+                case "Maintenance": return new SolidColorBrush(Color.FromArgb(40, 0x66, 0x66, 0x66));
+                default: return new SolidColorBrush(Color.FromArgb(40, 0x88, 0x88, 0x88));
             }
         }
 
@@ -1360,14 +1571,13 @@ namespace OOP_FINALS.HotelReservation
             => MessageBox.Show(msg, "Validation", MessageBoxButton.OK, MessageBoxImage.Warning);
 
         private static void ShowDbError(string source, Exception ex)
-            => MessageBox.Show(
-                string.Format("Error in {0}:\n\n{1}", source, ex.Message),
+            => MessageBox.Show(string.Format("Error in {0}:\n\n{1}", source, ex.Message),
                 "Database Error", MessageBoxButton.OK, MessageBoxImage.Error);
     }
 
-    // ═════════════════════════════════════════════════════════════════════════
-    // SqlCommand extension helper
-    // ═════════════════════════════════════════════════════════════════════════
+    // ════════════════════════════════════════════════════════════════════════
+    // SqlCommand extension
+    // ════════════════════════════════════════════════════════════════════════
     internal static class SqlCommandExtensions
     {
         public static SqlCommand WithParam(this SqlCommand cmd, string name, object value)
@@ -1377,22 +1587,27 @@ namespace OOP_FINALS.HotelReservation
         }
     }
 
-    // ═════════════════════════════════════════════════════════════════════════
+    // ════════════════════════════════════════════════════════════════════════
     // VIEW MODELS
-    // ═════════════════════════════════════════════════════════════════════════
+    // ════════════════════════════════════════════════════════════════════════
     public class RoomCardViewModel : INotifyPropertyChanged
     {
         private SolidColorBrush _borderColor;
         private SolidColorBrush _bgColor;
         private string _selectHint;
         private SolidColorBrush _hintColor;
+        private Visibility _bookBtnVisible = Visibility.Visible;
+        private Visibility _hintVisible = Visibility.Collapsed;
 
         public int RoomID { get; set; }
         public string RoomNumber { get; set; }
         public string TypeName { get; set; }
         public string Description { get; set; }
         public decimal PricePerNight { get; set; }
+
+        // Formatted for card display
         public string PriceFormatted => string.Format("{0:N0}", PricePerNight);
+
         public string Status { get; set; }
         public bool IsAvailable { get; set; }
         public bool IsSelected { get; set; }
@@ -1420,6 +1635,16 @@ namespace OOP_FINALS.HotelReservation
             get { return _hintColor; }
             set { _hintColor = value; OnPropChanged("HintColor"); }
         }
+        public Visibility BookBtnVisible
+        {
+            get { return _bookBtnVisible; }
+            set { _bookBtnVisible = value; OnPropChanged("BookBtnVisible"); }
+        }
+        public Visibility HintVisible
+        {
+            get { return _hintVisible; }
+            set { _hintVisible = value; OnPropChanged("HintVisible"); }
+        }
 
         public ICommand SelectCommand { get; set; }
 
@@ -1437,7 +1662,10 @@ namespace OOP_FINALS.HotelReservation
         public string RoomNumber { get; set; }
         public string TypeName { get; set; }
         public decimal PricePerNight { get; set; }
-        public string PriceDisplay => string.Format("₱{0:N0}/night", PricePerNight);
+
+        // CHANGED: /3hrs label
+        public string PriceDisplay => string.Format("₱{0:N0}/3hrs", PricePerNight);
+
         public string Status { get; set; }
         public SolidColorBrush StatusColor { get; set; }
         public SolidColorBrush StatusBadgeBg { get; set; }
@@ -1461,7 +1689,10 @@ namespace OOP_FINALS.HotelReservation
         public string Total { get; set; }
         public string Status { get; set; }
         public string PaymentStatus { get; set; }
-        public string PaymentDate { get; set; }   // ← exact payment timestamp (MM/dd/yyyy HH:mm)
+        public string PaymentDate { get; set; }
+
+        // Raw DateTime for extension calculations
+        public DateTime RawCheckOut { get; set; }
     }
 
     public class BillingDetailItem
@@ -1474,9 +1705,9 @@ namespace OOP_FINALS.HotelReservation
         public string Subtotal { get; set; }
     }
 
-    // ═════════════════════════════════════════════════════════════════════════
+    // ════════════════════════════════════════════════════════════════════════
     // RELAY COMMAND
-    // ═════════════════════════════════════════════════════════════════════════
+    // ════════════════════════════════════════════════════════════════════════
     public class RelayCommand : ICommand
     {
         private readonly Action<object> _execute;

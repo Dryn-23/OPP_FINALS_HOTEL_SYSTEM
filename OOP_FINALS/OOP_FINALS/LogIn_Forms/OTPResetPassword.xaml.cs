@@ -119,7 +119,12 @@ namespace OOP_FINALS
             using (var conn = new SqlConnection(connectionString))
             {
                 conn.Open();
-                using (var cmd = new SqlCommand("SELECT COUNT(*) FROM Staff WHERE Email=@e", conn))
+                using (var cmd = new SqlCommand(@"
+                SELECT 
+                  COUNT(*) 
+                FROM Staff 
+                WHERE Email=@e
+                ", conn))
                 {
                     cmd.Parameters.AddWithValue("@e", email);
                     return (int)cmd.ExecuteScalar() > 0;

@@ -31,16 +31,41 @@ namespace OOP_FINALS
                 using (var conn = new SqlConnection(connectionString))
                 {
                     conn.Open();
-                    using (var cmd = new SqlCommand("SELECT UserName FROM Staff WHERE Email=@e", conn))
+
+                    using (var transaction = conn.BeginTransaction())
                     {
-                        cmd.Parameters.AddWithValue("@e", email);
-                        var username = cmd.ExecuteScalar()?.ToString();
-                        if (!string.IsNullOrEmpty(username))
-                            txtUsername.Text = username;
+                        try
+                        {
+                            using (var cmd = new SqlCommand(
+                                @"SELECT 
+                                   UserName 
+                                  FROM Staff 
+                                  WHERE Email = @e",
+                                conn,
+                                transaction))
+                            {
+                                cmd.Parameters.AddWithValue("@e", email);
+
+                                var username = cmd.ExecuteScalar()?.ToString();
+
+                                if (!string.IsNullOrEmpty(username))
+                                    txtUsername.Text = username;
+                            }
+
+                            transaction.Commit(); // ✅ success
+                        }
+                        catch
+                        {
+                            transaction.Rollback(); // ❌ error
+                            throw;
+                        }
                     }
                 }
             }
-            catch { }
+            catch
+            {
+                // optional: log error instead of empty catch
+            }
         }
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
         {
@@ -144,57 +169,82 @@ namespace OOP_FINALS
                 {
                     conn.Open();
 
-                    // 🔹 1. Check current password
-                    string checkQuery = @"SELECT PasswordHash FROM Staff WHERE UserName = @username";
-                    using (SqlCommand checkCmd = new SqlCommand(checkQuery, conn))
+                    using (SqlTransaction transaction = conn.BeginTransaction())
                     {
-                        checkCmd.Parameters.AddWithValue("@username", username);
-                        object resultObj = checkCmd.ExecuteScalar();
-
-                        if (resultObj == null)
+                        try
                         {
-                            MessageBox.Show("Username not found.",
-                                "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                            return;
+                            // 🔹 1. Check current password
+                            string checkQuery = @"
+                                                 SELECT   
+                                                   PasswordHash  
+                                                 FROM Staff  
+                                                 WHERE UserName = @username";
+
+                            string currentPassword;
+
+                            using (SqlCommand checkCmd = new SqlCommand(checkQuery, conn, transaction))
+                            {
+                                checkCmd.Parameters.AddWithValue("@username", username);
+                                object resultObj = checkCmd.ExecuteScalar();
+
+                                if (resultObj == null)
+                                {
+                                    MessageBox.Show("Username not found.",
+                                        "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                                    transaction.Rollback();
+                                    return;
+                                }
+
+                                currentPassword = resultObj.ToString();
+                            }
+
+                            if (currentPassword == newPass)
+                            {
+                                MessageBox.Show("You are using your old password. Please choose a new one.",
+                                    "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                                txtNewPassword.Focus();
+                                transaction.Rollback();
+                                return;
+                            }
+
+                            // 🔹 2. Update password
+                            string updateQuery = @"
+                                                   UPDATE 
+                                                    Staff 
+                                                   SET PasswordHash = @password 
+                                                   WHERE UserName = @username";
+
+                            using (SqlCommand cmd = new SqlCommand(updateQuery, conn, transaction))
+                            {
+                                cmd.Parameters.AddWithValue("@username", username);
+                                cmd.Parameters.AddWithValue("@password", newPass); // ⚠ hash in real apps
+
+                                int rowsAffected = cmd.ExecuteNonQuery();
+
+                                if (rowsAffected > 0)
+                                {
+                                    transaction.Commit(); // ✅ SUCCESS
+
+                                    MessageBox.Show("Password successfully reset!",
+                                        "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                                    MainWindow login = new MainWindow();
+                                    login.Show();
+                                    this.Close();
+                                }
+                                else
+                                {
+                                    transaction.Rollback(); // ❌ FAILED UPDATE
+
+                                    MessageBox.Show("Failed to update password.",
+                                        "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                                }
+                            }
                         }
-
-                        string currentPassword = resultObj.ToString();
-
-                        if (currentPassword == newPass) // ⚠ Compare old & new password
+                        catch
                         {
-                            MessageBox.Show("You are using your old password. Please choose a new one.",
-                                "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                            txtNewPassword.Focus();
-                            return;
-                        }
-                    }
-
-                    // 🔹 2. Update password
-                    string updateQuery = @"UPDATE Staff 
-                                   SET PasswordHash = @password 
-                                   WHERE UserName = @username";
-
-                    using (SqlCommand cmd = new SqlCommand(updateQuery, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@username", username);
-                        cmd.Parameters.AddWithValue("@password", newPass); // ⚠ Hash in real apps
-
-                        int rowsAffected = cmd.ExecuteNonQuery();
-
-                        if (rowsAffected > 0)
-                        {
-                            MessageBox.Show("Password successfully reset!",
-                                "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-
-                            // Open main login window again
-                            MainWindow login = new MainWindow();
-                            login.Show();
-                            this.Close();
-                        }
-                        else
-                        {
-                            MessageBox.Show("Failed to update password.",
-                                "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                            transaction.Rollback(); // ❌ ANY ERROR
+                            throw;
                         }
                     }
                 }

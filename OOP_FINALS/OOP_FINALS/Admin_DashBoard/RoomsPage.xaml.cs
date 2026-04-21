@@ -21,21 +21,26 @@ namespace OOP_FINALS
         private void LoadRooms()
         {
             DatabaseHelper db = new DatabaseHelper();
-
+            //load rooms with status
             string query = @"
-               SELECT r.RoomID, r.RoomNumber,
-CASE 
-    WHEN EXISTS (
-        SELECT 1 FROM Reservations 
-        WHERE RoomID = r.RoomID 
-        AND GETDATE() BETWEEN CheckInDate AND CheckOutDate
-    )
-    THEN 'Occupied'
-    ELSE 'Available'
-END AS Status,
-rt.TypeName, rt.PricePerNight
-FROM Rooms r
-JOIN RoomTypes rt ON r.RoomTypeID = rt.RoomTypeID";
+               SELECT 
+                r.RoomID,
+                r.RoomNumber,
+                CASE 
+                WHEN EXISTS 
+               (
+               SELECT 
+                1 
+               FROM Reservations 
+               WHERE RoomID = r.RoomID 
+               AND GETDATE() BETWEEN CheckInDate AND CheckOutDate
+               )
+                THEN 'Occupied'
+                ELSE 'Available'
+               END AS Status,
+                rt.TypeName, rt.PricePerNight
+               FROM Rooms r
+               JOIN RoomTypes rt ON r.RoomTypeID = rt.RoomTypeID";
 
             DataTable dt = db.ExecuteQuery(query);
             Rooms.Clear();

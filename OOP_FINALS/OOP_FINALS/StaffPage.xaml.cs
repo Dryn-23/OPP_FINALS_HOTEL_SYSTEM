@@ -82,30 +82,68 @@ namespace OOP_FINALS
                 int staffID = Convert.ToInt32(rowView["staffID"]);
                 string fullname = rowView["Fullname"]?.ToString() ?? "this staff";
 
-                var result = MessageBox.Show($"Are you sure you want to delete {fullname}?",
-                                           "Confirm Delete",
-                                           MessageBoxButton.YesNo,
-                                           MessageBoxImage.Warning);
+                var result = MessageBox.Show(
+                    $"Are you sure you want to delete {fullname}?",
+                    "Confirm Delete",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
 
                 if (result == MessageBoxResult.Yes)
                 {
-                    try
+                    using (SqlConnection con = new SqlConnection(connectionString))
                     {
-                        using (SqlConnection con = new SqlConnection(connectionString))
-                        {
-                            con.Open();
-                            string query = "DELETE FROM Staff WHERE staffID = @staffID";
-                            SqlCommand cmd = new SqlCommand(query, con);
-                            cmd.Parameters.AddWithValue("@staffID", staffID);
-                            cmd.ExecuteNonQuery();
-                        }
+                        con.Open();
 
-                        MessageBox.Show("Staff deleted successfully!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
-                        LoadStaff(SearchBox.Text);
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"Error deleting staff: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        SqlTransaction transaction = con.BeginTransaction();
+
+                        try
+                        {//Delete staff record
+                            string query = @"DELETE FROM Staff WHERE staffID = @staffID";
+
+                            using (SqlCommand cmd = new SqlCommand(query, con, transaction))
+                            {
+                                cmd.Parameters.AddWithValue("@staffID", staffID);
+
+                                int rowsAffected = cmd.ExecuteNonQuery();
+
+                                if (rowsAffected == 0)
+                                {
+                                    throw new Exception("No staff record was found to delete.");
+                                }
+                            }
+
+                            // Commit if delete succeeds
+                            transaction.Commit();
+
+                            MessageBox.Show(
+                                "Staff deleted successfully!",
+                                "Success",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Information);
+
+                            LoadStaff(SearchBox.Text);
+                        }
+                        catch (Exception ex)
+                        {
+                            try
+                            {
+                                transaction.Rollback();
+                            }
+                            catch (Exception rollbackEx)
+                            {
+                                MessageBox.Show(
+                                    $"Rollback failed: {rollbackEx.Message}",
+                                    "Rollback Error",
+                                    MessageBoxButton.OK,
+                                    MessageBoxImage.Error);
+                            }
+
+                            MessageBox.Show(
+                                $"Error deleting staff: {ex.Message}",
+                                "Error",
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Error);
+                        }
                     }
                 }
             }
@@ -117,10 +155,17 @@ namespace OOP_FINALS
             {
                 using (SqlConnection con = new SqlConnection(connectionString))
                 {
+                    // Load staff with optional search filter
                     con.Open();
                     string query = @"
-    SELECT s.staffID, s.Fullname, r.RoleName AS Department, s.Username, 
-           s.ContactNumber, s.Email, s.Status
+    SELECT 
+     s.staffID, 
+     s.Fullname, 
+     r.RoleName AS Department, 
+     s.Username, 
+     s.ContactNumber, 
+     s.Email, 
+     s.Status
     FROM Staff s
     INNER JOIN Roles r ON s.RoleID = r.RoleID
     WHERE (@search = '' OR s.Fullname LIKE @search OR s.Username LIKE @search)";

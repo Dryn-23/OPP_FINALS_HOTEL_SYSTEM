@@ -245,8 +245,11 @@ namespace OOP_FINALS.HotelReservation
             SqlConnection conn = null; SqlDataReader dr = null;
             try
             {
+                // LOAD – ROOM TYPE FILTER
                 conn = OpenConnection();
-                dr = new SqlCommand("SELECT TypeName FROM RoomTypes ORDER BY TypeName", conn).ExecuteReader();
+                dr = new SqlCommand(@"SELECT 
+                                        TypeName 
+                                      FROM RoomTypes ORDER BY TypeName", conn).ExecuteReader();
                 while (dr.Read())
                     cmbRoomTypeFilter.Items.Add(new ComboBoxItem { Content = dr["TypeName"].ToString() });
             }
@@ -267,10 +270,17 @@ namespace OOP_FINALS.HotelReservation
             SqlConnection conn = null; SqlDataReader dr = null;
             try
             {
+                // LOAD – ROOM CARDS
+                // PricePerNight column = price per 3-hour session
                 conn = OpenConnection();
                 string sql = @"
-                    SELECT r.RoomID, r.RoomNumber, r.Status,
-                           rt.TypeName, rt.Description, rt.PricePerNight
+                    SELECT 
+                      r.RoomID, 
+                      r.RoomNumber, 
+                      r.Status,
+                      rt.TypeName, 
+                      rt.Description, 
+                      rt.PricePerNight
                     FROM   Rooms r
                     JOIN   RoomTypes rt ON rt.RoomTypeID = r.RoomTypeID";
 
@@ -401,10 +411,15 @@ namespace OOP_FINALS.HotelReservation
             SqlConnection conn = null; SqlDataReader dr = null;
             try
             {
+                 // LOAD – ROOM MAP
                 conn = OpenConnection();
                 dr = new SqlCommand(@"
-                    SELECT r.RoomID, r.RoomNumber, r.Status,
-                           rt.TypeName, rt.PricePerNight
+                    SELECT 
+                     r.RoomID, 
+                     r.RoomNumber, 
+                     r.Status,
+                     rt.TypeName, 
+                     rt.PricePerNight
                     FROM   Rooms r
                     JOIN   RoomTypes rt ON rt.RoomTypeID = r.RoomTypeID
                     ORDER  BY r.RoomNumber", conn).ExecuteReader();
@@ -440,9 +455,13 @@ namespace OOP_FINALS.HotelReservation
             SqlConnection conn = null; SqlDataReader dr = null;
             try
             {
+                // LOAD – STAFF
                 conn = OpenConnection();
                 dr = new SqlCommand(@"
-                    SELECT s.StaffID, s.FullName, r.RoleName
+                    SELECT 
+                      s.StaffID, 
+                      s.FullName,  
+                      r.RoleName
                     FROM   Staff s JOIN Roles r ON r.RoleID = s.RoleID
                     WHERE  s.Status = 'Active' ORDER BY s.FullName", conn).ExecuteReader();
 
@@ -475,12 +494,13 @@ namespace OOP_FINALS.HotelReservation
             SqlConnection conn = null; SqlDataReader dr = null;
             try
             {
+                // LOAD – BOOKINGS
                 conn = OpenConnection();
                 string sql = @"
                     SELECT r.ReservationID,
                            c.FirstName + ' ' + c.LastName AS GuestName,
                            rm.RoomNumber,
-                           rt.TypeName                     AS RoomType,
+                           rt.TypeName AS RoomType,
                            r.CheckInDate,
                            r.CheckOutDate,
                            r.NumberOfGuest,
@@ -547,16 +567,24 @@ namespace OOP_FINALS.HotelReservation
             SqlConnection conn = null;
             try
             {
+                // DASHBOARD
                 conn = OpenConnection();
-                lblOccupied.Text = Scalar(conn, "SELECT COUNT(*) FROM Rooms WHERE Status='Occupied'").ToString();
-                lblAvailable.Text = Scalar(conn, "SELECT COUNT(*) FROM Rooms WHERE Status='Available'").ToString();
+                lblOccupied.Text = Scalar(conn, @"SELECT 
+                                                   COUNT(*) 
+                                                  FROM Rooms WHERE Status='Occupied'").ToString();
+                lblAvailable.Text = Scalar(conn, @"SELECT 
+                                                    COUNT(*) 
+                                                   FROM Rooms WHERE Status='Available'").ToString();
                 lblArrivals.Text = Scalar(conn, @"
-                    SELECT COUNT(*) FROM Reservations
+                    SELECT 
+                     COUNT(*) 
+                    FROM Reservations
                     WHERE CheckInDate = CAST(GETDATE() AS DATE)
                     AND   ReservationStatus = 'Confirmed'").ToString();
 
                 decimal rev = Convert.ToDecimal(Scalar(conn, @"
-                    SELECT ISNULL(SUM(p.AmountPaid),0)
+                    SELECT 
+                     ISNULL(SUM(p.AmountPaid),0)
                     FROM   Payment p
                     JOIN   Reservations r ON r.ReservationID = p.ReservationID
                     WHERE  CAST(r.ReservationDate AS DATE) = CAST(GETDATE() AS DATE)
@@ -708,8 +736,10 @@ namespace OOP_FINALS.HotelReservation
             {
                 conn = OpenConnection();
 
-                // Pre-check availability
-                using (var chk = new SqlCommand("SELECT Status FROM Rooms WHERE RoomID = @rid", conn))
+                                                   // Pre-check availability
+                using (var chk = new SqlCommand(@"SELECT 
+                                                   Status 
+                                                  FROM Rooms WHERE RoomID = @rid", conn))
                 {
                     chk.Parameters.AddWithValue("@rid", roomId);
                     var st = chk.ExecuteScalar();
@@ -728,7 +758,9 @@ namespace OOP_FINALS.HotelReservation
                 // 1. Upsert Customer
                 int customerId;
                 using (var cmdChk = new SqlCommand(
-                    "SELECT CustomerID FROM Customers WHERE ContactNumber = @contact", conn, tx))
+                    @"SELECT 
+                       CustomerID 
+                      FROM Customers WHERE ContactNumber = @contact", conn, tx))
                 {
                     cmdChk.Parameters.AddWithValue("@contact", txtContactNumber.Text.Trim());
                     var obj = cmdChk.ExecuteScalar();
@@ -830,7 +862,9 @@ namespace OOP_FINALS.HotelReservation
                 }
 
                 // 6. Mark Occupied
-                new SqlCommand("UPDATE Rooms SET Status='Occupied' WHERE RoomID=@rid", conn, tx)
+                new SqlCommand(@"UPDATE 
+                                  Rooms 
+                                 SET Status='Occupied' WHERE RoomID=@rid", conn, tx)
                     .WithParam("@rid", roomId).ExecuteNonQuery();
 
                 tx.Commit();
@@ -851,10 +885,26 @@ namespace OOP_FINALS.HotelReservation
                 RefreshDashboard();
                 _billingItems.Clear();
                 GoToStep(4);
+                tx.Commit();
             }
             catch (Exception ex)
             {
-                if (tx != null) try { tx.Rollback(); } catch { }
+                if (tx != null)
+                {
+                    try
+                    {
+                        tx.Rollback();
+                    }
+                    catch (Exception rollbackEx)
+                    {
+                        MessageBox.Show(
+                            "Rollback failed: " + rollbackEx.Message,
+                            "Rollback Error",
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Error);
+                    }
+                }
+
                 ShowDbError("BtnBook_Click — Transaction rolled back.", ex);
             }
             finally { tx?.Dispose(); conn?.Close(); }
@@ -863,9 +913,15 @@ namespace OOP_FINALS.HotelReservation
         private static void InsertBillingDetail(SqlConnection conn, SqlTransaction tx,
             int billingId, string description, int qty, decimal unitPrice)
         {
+            //insert billing detail record
             using (var cmd = new SqlCommand(@"
                 INSERT INTO Billing_Details (BillingID,Description,Quantity,UnitPrice,Subtotal)
-                VALUES (@bid,@desc,@qty,@up,@sub)", conn, tx))
+                VALUES (
+                       @bid,
+                       @desc,
+                       @qty,
+                       @up,
+                       @sub)", conn, tx))
             {
                 cmd.Parameters.AddWithValue("@bid", billingId);
                 cmd.Parameters.AddWithValue("@desc", description);
@@ -966,6 +1022,7 @@ namespace OOP_FINALS.HotelReservation
             SqlConnection conn = null;
             try
             {
+                //extension rate = same as original booking's room rate (PricePerNight)
                 conn = OpenConnection();
                 using (var cmd = new SqlCommand(@"
                     SELECT rt.PricePerNight
@@ -1120,7 +1177,9 @@ namespace OOP_FINALS.HotelReservation
                 tx = conn.BeginTransaction(System.Data.IsolationLevel.ReadCommitted);
 
                 // 1. Update CheckOutDate
-                new SqlCommand("UPDATE Reservations SET CheckOutDate=@co WHERE ReservationID=@rid", conn, tx)
+                new SqlCommand(@"UPDATE 
+                                  Reservations 
+                                 SET CheckOutDate=@co WHERE ReservationID=@rid", conn, tx)
                     .WithParam("@co", newCheckOut)
                     .WithParam("@rid", resId)
                     .ExecuteNonQuery();
@@ -1384,11 +1443,15 @@ namespace OOP_FINALS.HotelReservation
             {
                 conn = OpenConnection();
                 tx = conn.BeginTransaction(System.Data.IsolationLevel.ReadCommitted);
-
-                new SqlCommand("UPDATE Reservations SET ReservationStatus='Checked Out' WHERE ReservationID=@rid", conn, tx)
+                // 1. Update reservation status to 'Checked Out'
+                new SqlCommand(@"UPDATE 
+                                   Reservations 
+                                 SET ReservationStatus='Checked Out' WHERE ReservationID=@rid", conn, tx)
                     .WithParam("@rid", sel.ReservationID).ExecuteNonQuery();
 
-                new SqlCommand("UPDATE Rooms SET Status='Cleaning' WHERE RoomNumber=@rn", conn, tx)
+                new SqlCommand(@"UPDATE 
+                                   Rooms 
+                                 SET Status='Cleaning' WHERE RoomNumber=@rn", conn, tx)
                     .WithParam("@rn", sel.RoomNumber).ExecuteNonQuery();
 
                 using (var cmdHk = new SqlCommand(@"
@@ -1436,11 +1499,13 @@ namespace OOP_FINALS.HotelReservation
             {
                 conn = OpenConnection();
                 tx = conn.BeginTransaction(System.Data.IsolationLevel.ReadCommitted);
-
+                // 1. Update reservation status to 'Cancelled'
                 new SqlCommand("UPDATE Reservations SET ReservationStatus='Cancelled' WHERE ReservationID=@rid", conn, tx)
                     .WithParam("@rid", sel.ReservationID).ExecuteNonQuery();
+                // 2. Update billing status to 'Cancelled'  
                 new SqlCommand("UPDATE Billing SET BillingStatus='Cancelled' WHERE ReservationID=@rid", conn, tx)
                     .WithParam("@rid", sel.ReservationID).ExecuteNonQuery();
+                // 3. Mark room as Available
                 new SqlCommand("UPDATE Rooms SET Status='Available' WHERE RoomNumber=@rn", conn, tx)
                     .WithParam("@rn", sel.RoomNumber).ExecuteNonQuery();
 
@@ -1467,7 +1532,10 @@ namespace OOP_FINALS.HotelReservation
         {
             SqlConnection conn = null; SqlDataReader dr = null;
             try
-            {
+            {    //show list of pending housekeeping tasks with assigned staff,
+                 //then ask if user wants to mark all as completed
+                 //(this is a simplification, in real life there would be a
+                 //separate interface for managing housekeeping tasks)
                 conn = OpenConnection();
                 dr = new SqlCommand(@"
                     SELECT hk.HouseKeepingID, r.RoomNumber, rt.TypeName,
@@ -1500,18 +1568,23 @@ namespace OOP_FINALS.HotelReservation
                 var tx2 = conn.BeginTransaction(System.Data.IsolationLevel.ReadCommitted);
                 try
                 {
+                    // Mark all pending housekeeping tasks as Completed
                     int updated = new SqlCommand(
-                        "UPDATE HouseKeeping SET CleaningStatus='Completed' WHERE CleaningStatus='Pending'",
+                        @"UPDATE 
+                           HouseKeeping 
+                          SET CleaningStatus='Completed' WHERE CleaningStatus='Pending'",
                         conn, tx2).ExecuteNonQuery();
-
-                    new SqlCommand("UPDATE Rooms SET Status='Available' WHERE Status='Cleaning'",
+                    // Set all rooms with Cleaning status to Available
+                    new SqlCommand(@"UPDATE 
+                                      Rooms 
+                                     SET Status='Available' WHERE Status='Cleaning'",
                         conn, tx2).ExecuteNonQuery();
 
                     tx2.Commit();
                     MessageBox.Show(
                         string.Format("{0} housekeeping task(s) completed. Rooms are now Available.", updated),
                         "Housekeeping Done", MessageBoxButton.OK, MessageBoxImage.Information);
-
+                     
                     LoadRoomCards(GetTypeFilter()); LoadRooms(); RefreshDashboard();
                 }
                 catch (Exception ex) { try { tx2.Rollback(); } catch { } ShowDbError("Housekeeping update", ex); }

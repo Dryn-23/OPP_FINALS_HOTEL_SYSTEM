@@ -104,7 +104,9 @@ namespace OOP_FINALS
         {
             try
             {
+                
                 DatabaseHelper db = new DatabaseHelper();
+                //Load payments with customer and room details
                 string query = @"
             SELECT p.PaymentID, p.ReservationID, p.AmountPaid, p.PaymentMethod, 
                    p.PaymentStatus, p.PaymentDate,

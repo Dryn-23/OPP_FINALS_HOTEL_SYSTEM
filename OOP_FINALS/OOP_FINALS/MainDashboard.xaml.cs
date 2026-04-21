@@ -45,7 +45,10 @@ namespace OOP_FINALS
                 using (var connection = new SqlConnection(connectionString))
                 {
                     await connection.OpenAsync();
-                    using (var cmd = new SqlCommand("SELECT COUNT(*) FROM Customers", connection))
+                    using (var cmd = new SqlCommand(@"
+                                                    SELECT 
+                                                      COUNT(*) 
+                                                    FROM Customers", connection))
                     {
                         return (int)await cmd.ExecuteScalarAsync();
                     }
@@ -65,7 +68,9 @@ namespace OOP_FINALS
                 {
                     await connection.OpenAsync();
                     using (var cmd = new SqlCommand(@"
-                        SELECT COUNT(*) FROM Reservations 
+                        SELECT 
+                         COUNT(*) 
+                        FROM Reservations 
                         WHERE ReservationStatus IN ('Confirmed', 'CheckedIn')", connection))
                     {
                         return (int)await cmd.ExecuteScalarAsync();
@@ -86,7 +91,9 @@ namespace OOP_FINALS
                 {
                     await connection.OpenAsync();
                     using (var cmd = new SqlCommand(@"
-                        SELECT ISNULL(SUM(FinalAmount), 0) FROM Billing 
+                        SELECT 
+                          ISNULL(SUM(FinalAmount), 0) 
+                        FROM Billing 
                         WHERE BillingStatus = 'Paid'", connection))
                     {
                         return (decimal)await cmd.ExecuteScalarAsync();

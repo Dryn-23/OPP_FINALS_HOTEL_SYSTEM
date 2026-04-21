@@ -44,6 +44,7 @@ namespace OOP_FINALS
 
                 using (SqlConnection conn = new SqlConnection(connectionString))
                 {
+                   // Bookings
                     conn.Open();
 
                     string query = @"

@@ -139,7 +139,9 @@ namespace OOP_FINALS.AdminMainDashboard
             try
             {
                 var db = new DatabaseHelper();
-                var result = db.ExecuteScalar("SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES");
+                var result = db.ExecuteScalar(@"SELECT 
+                                                 COUNT(*) 
+                                                FROM INFORMATION_SCHEMA.TABLES");
                 return result != null;
             }
             catch (Exception ex)
@@ -186,8 +188,10 @@ namespace OOP_FINALS.AdminMainDashboard
             {
                 // Pass StaffID as a parameter — never interpolate user-controlled values.
                 const string sql = @"
-                    SELECT FullName FROM Staff
-                    WHERE StaffID = @StaffID AND Status = 'Active'";
+                                   SELECT 
+                                    FullName 
+                                   FROM Staff
+                                   WHERE StaffID = @StaffID AND Status = 'Active'";
 
                 var name = db.ExecuteScalarWithParam(sql, "@StaffID", _currentStaffId);
                 if (name != null)
@@ -220,14 +224,19 @@ namespace OOP_FINALS.AdminMainDashboard
         {
             // Total active bookings
             var bookings = db.ExecuteScalar(@"
-                SELECT COUNT(*) FROM Reservations
-                WHERE LOWER(ReservationStatus) IN ('confirmed','checked-in','checked in')");
+                SELECT 
+                 COUNT(*) 
+                FROM Reservations
+                WHERE LOWER(ReservationStatus) 
+                IN ('confirmed','checked-in','checked in')");
             TotalBookingsText.Text = bookings != null
                 ? Convert.ToInt32(bookings).ToString("N0") : "0";
 
             // Today check-ins
             var checkins = db.ExecuteScalar(@"
-                SELECT COUNT(*) FROM Reservations
+                SELECT
+                COUNT(*) 
+                FROM Reservations
                 WHERE CAST(CheckInDate AS DATE) = CAST(GETDATE() AS DATE)
                   AND ReservationStatus IN ('Confirmed','Checked-In','Checked In')");
             TodayCheckinsText.Text = checkins != null
@@ -235,7 +244,8 @@ namespace OOP_FINALS.AdminMainDashboard
 
             // Monthly revenue (completed payments this month)
             var revenue = db.ExecuteScalar(@"
-                SELECT ISNULL(SUM(AmountPaid), 0)
+                SELECT 
+                 ISNULL(SUM(AmountPaid), 0)
                 FROM Payment
                 WHERE MONTH(PaymentDate) = MONTH(GETDATE())
                   AND YEAR(PaymentDate)  = YEAR(GETDATE())
@@ -246,10 +256,10 @@ namespace OOP_FINALS.AdminMainDashboard
             // Occupancy rate
             var occTable = db.ExecuteQueryDataTable(@"
                 SELECT
-                    ISNULL(CAST(occ.Cnt AS FLOAT) / NULLIF(tot.Cnt, 0), 0) * 100 AS Rate
+                  ISNULL(CAST(occ.Cnt AS FLOAT) / NULLIF(tot.Cnt, 0), 0) * 100 AS Rate
                 FROM
-                    (SELECT COUNT(*) AS Cnt FROM Rooms WHERE Status = 'Occupied')     occ,
-                    (SELECT COUNT(*) AS Cnt FROM Rooms WHERE Status != 'Maintenance') tot");
+                (SELECT COUNT(*) AS Cnt FROM Rooms WHERE Status = 'Occupied')     occ,
+                (SELECT COUNT(*) AS Cnt FROM Rooms WHERE Status != 'Maintenance') tot");
 
             if (occTable != null && occTable.Rows.Count > 0)
             {
@@ -265,8 +275,11 @@ namespace OOP_FINALS.AdminMainDashboard
 
         private void LoadRoomStatus(DatabaseHelper db)
         {
+            //  ROOM STATUS ROW
             var tbl = db.ExecuteQueryDataTable(@"
-                SELECT Status, COUNT(*) AS Cnt
+                SELECT 
+                 Status, 
+                 COUNT(*) AS Cnt
                 FROM Rooms
                 GROUP BY Status");
 
@@ -296,14 +309,15 @@ namespace OOP_FINALS.AdminMainDashboard
         {
             try
             {
+                //  RECENT BOOKINGS TABLE
                 var tbl = db.ExecuteQueryDataTable(@"
                     SELECT TOP 6
-                        c.FirstName + ' ' + c.LastName             AS GuestName,
-                        rt.TypeName + ' #' + rm.RoomNumber         AS RoomInfo,
-                        FORMAT(r.CheckInDate,  'MMM dd')           AS CheckIn,
-                        FORMAT(r.CheckOutDate, 'MMM dd')           AS CheckOut,
-                        r.ReservationStatus                        AS Status,
-                        ISNULL(b.FinalAmount, 0)                   AS Amount
+                        c.FirstName + ' ' + c.LastName AS GuestName,
+                        rt.TypeName + ' #' + rm.RoomNumber  AS RoomInfo,
+                        FORMAT(r.CheckInDate,  'MMM dd') AS CheckIn,
+                        FORMAT(r.CheckOutDate, 'MMM dd') AS CheckOut,
+                        r.ReservationStatus AS Status,
+                        ISNULL(b.FinalAmount, 0) AS Amount
                     FROM Reservations r
                     JOIN Customers  c  ON r.CustomerID  = c.CustomerID
                     JOIN Rooms      rm ON r.RoomID       = rm.RoomID
@@ -362,28 +376,33 @@ namespace OOP_FINALS.AdminMainDashboard
 
         private void LoadQuickStats(DatabaseHelper db)
         {
+            //  QUICK STATS
             var cleaned = db.ExecuteScalar(@"
-                SELECT COUNT(DISTINCT RoomID)
+                SELECT 
+                 COUNT(DISTINCT RoomID)
                 FROM HouseKeeping
                 WHERE CleaningStatus = 'Completed'");
             CleanedTodayText.Text = cleaned != null ? Convert.ToInt32(cleaned).ToString() : "0";
 
             var newGuests = db.ExecuteScalar(@"
-                SELECT COUNT(DISTINCT r.CustomerID)
+                SELECT 
+                 COUNT(DISTINCT r.CustomerID)
                 FROM Reservations r
                 WHERE CAST(r.CheckInDate AS DATE) = CAST(GETDATE() AS DATE)
                   AND r.ReservationStatus IN ('Confirmed','Checked-In','Checked In')");
             NewGuestsTodayText.Text = newGuests != null ? Convert.ToInt32(newGuests).ToString() : "0";
 
             var weekIn = db.ExecuteScalar(@"
-                SELECT COUNT(*)
+                SELECT 
+                 COUNT(*)
                 FROM Reservations
                 WHERE CheckInDate >= DATEADD(DAY, -6, CAST(GETDATE() AS DATE))
                   AND LOWER(ReservationStatus) IN ('confirmed','checked-in','checked in')");
             WeekCheckinsText.Text = weekIn != null ? Convert.ToInt32(weekIn).ToString() : "0";
 
             var checkouts = db.ExecuteScalar(@"
-                SELECT COUNT(*)
+                SELECT 
+                 COUNT(*)
                 FROM Reservations
                 WHERE CAST(CheckOutDate AS DATE) = CAST(GETDATE() AS DATE)
                   AND LOWER(ReservationStatus) IN ('checked-out','checked out')");
@@ -394,6 +413,7 @@ namespace OOP_FINALS.AdminMainDashboard
         {
             try
             {
+                //LoadRecentActivity
                 var tbl = db.ExecuteQueryDataTable(@"
                     SELECT TOP 5
                         c.FirstName + ' ' + c.LastName AS Name,
@@ -458,6 +478,7 @@ namespace OOP_FINALS.AdminMainDashboard
         {
             try
             {
+                //  MONTHLY CHART — DATA LOAD
                 int year = DateTime.Now.Year;
                 ChartYearLabel.Text = year.ToString();
 
@@ -666,6 +687,7 @@ namespace OOP_FINALS.AdminMainDashboard
         {
             try
             {
+                //  HOUSEKEEPING
                 var tbl = db.ExecuteQueryDataTable(@"
                     SELECT TOP 5
                         rm.RoomNumber,
@@ -712,6 +734,7 @@ namespace OOP_FINALS.AdminMainDashboard
                 //      AND Status = 'Active'
                 //    ORDER BY QuantityInStock ASC");
 
+                //  INVENTORY ALERTS
                 var tbl = db.ExecuteQueryDataTable(@"
                     SELECT TOP 5 ItemName, QuantityInStock, ReorderLevel
                   FROM Inventory

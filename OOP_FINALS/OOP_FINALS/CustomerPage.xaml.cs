@@ -56,26 +56,51 @@ namespace CustomerDashboard
             {
                 conn.Open();
 
-                string query = @"UPDATE Customers SET
-                                FirstName=@FirstName,
-                                LastName=@LastName,
-                                ContactNumber=@Contact,
-                                Email=@Email,i
-                                ValidIDType=@IDType,
-                                ValidIDNumber=@IDNumber
-                                WHERE CustomerID=@ID";
+                SqlTransaction transaction = conn.BeginTransaction();
 
-                SqlCommand cmd = new SqlCommand(query, conn);
+                try
+                {
+                    string query = @"
+                UPDATE Customers
+                SET
+                    FirstName = @FirstName,
+                    LastName = @LastName,
+                    ContactNumber = @Contact,
+                    Email = @Email,
+                    ValidIDType = @IDType,
+                    ValidIDNumber = @IDNumber
+                WHERE CustomerID = @ID";
 
-                cmd.Parameters.AddWithValue("@FirstName", customer.FirstName);
-                cmd.Parameters.AddWithValue("@LastName", customer.LastName);
-                cmd.Parameters.AddWithValue("@Contact", customer.ContactNumber);
-                cmd.Parameters.AddWithValue("@Email", customer.Email);
-                cmd.Parameters.AddWithValue("@IDType", customer.ValidIDType);
-                cmd.Parameters.AddWithValue("@IDNumber", customer.ValidIDNumber);
-                cmd.Parameters.AddWithValue("@ID", customer.CustomerID);
+                    using (SqlCommand cmd = new SqlCommand(query, conn, transaction))
+                    {
+                        cmd.Parameters.AddWithValue("@FirstName", customer.FirstName);
+                        cmd.Parameters.AddWithValue("@LastName", customer.LastName);
+                        cmd.Parameters.AddWithValue("@Contact", customer.ContactNumber);
+                        cmd.Parameters.AddWithValue("@Email", customer.Email);
+                        cmd.Parameters.AddWithValue("@IDType", customer.ValidIDType);
+                        cmd.Parameters.AddWithValue("@IDNumber", customer.ValidIDNumber);
+                        cmd.Parameters.AddWithValue("@ID", customer.CustomerID);
 
-                cmd.ExecuteNonQuery();
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    // Commit if everything succeeds
+                    transaction.Commit();
+                }
+                catch (Exception ex)
+                {
+                    // Roll back if an error occurs
+                    try
+                    {
+                        transaction.Rollback();
+                    }
+                    catch (Exception rollbackEx)
+                    {
+                        MessageBox.Show("Rollback failed: " + rollbackEx.Message);
+                    }
+
+                    MessageBox.Show("Update failed: " + ex.Message);
+                }
             }
         }
         private async void CustomerPage_Loaded(object sender, RoutedEventArgs e)

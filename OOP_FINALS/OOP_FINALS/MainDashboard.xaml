@@ -115,13 +115,13 @@
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
 
-                            
+                            <!-- Menu Toggle Button -->
                             <Button x:Name="MenuToggleButton" Margin="20,28,3,0" 
                                     Style="{StaticResource topButton}" Click="Button_Click">
                                 <Icon:PackIconMaterial Kind="Menu" Width="18" Height="18"/>
                             </Button>
 
-                            
+                            <!-- ========== SIDEBAR LOADING OVERLAY ========== -->
                             <Border x:Name="SidebarLoadingOverlay" Grid.Row="1" Background="Transparent" Visibility="Visible">
                                 <Grid>
                                     <!-- Dark overlay with your theme color -->
@@ -164,8 +164,8 @@
                                 </Grid>
                             </Border>
 
-                            
-                            <Border x:Name="SidebarContent" Grid.Row="1" Margin="0,20,0,0" Visibility="Visible">
+                            <!-- ========== ORIGINAL SIDEBAR CONTENT ========== -->
+                            <Border x:Name="SidebarContent" Grid.Row="1" Margin="0,20,0,0" Visibility="Collapsed">
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                                         <GradientStop Color="#FF9E6827" Offset="0"/>
@@ -177,7 +177,7 @@
                                 </Border.CornerRadius>
 
                                 <DockPanel>
-                                   
+                                    <!-- Logo -->
                                     <Border x:Name="LogoBorder" Width="90" Height="90" Padding="4" 
                                             Background="White" CornerRadius="100"
                                             DockPanel.Dock="Top" HorizontalAlignment="Left" Margin="40,-35,0,0">

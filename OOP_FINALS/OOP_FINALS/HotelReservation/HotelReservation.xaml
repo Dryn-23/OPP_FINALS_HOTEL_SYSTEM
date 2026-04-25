@@ -23,7 +23,7 @@
         <SolidColorBrush x:Key="GoldLight"     Color="#E8B050"/>
         <SolidColorBrush x:Key="GoldDim"       Color="#6A4810"/>
         <SolidColorBrush x:Key="GoldFaint"     Color="#2A1C06"/>
-        <SolidColorBrush x:Key="TextPrimary"   Color="#F2E8D8"/>
+        <SolidColorBrush x:Key="TextPrimary"   Color="Black"/>
         <SolidColorBrush x:Key="TextSecondary" Color="#B89A70"/>
         <SolidColorBrush x:Key="TextMuted"     Color="#6A5030"/>
         <SolidColorBrush x:Key="BorderSubtle"  Color="#241A0E"/>
@@ -94,7 +94,7 @@
 
         <Style x:Key="ComboStyle" TargetType="ComboBox">
             <Setter Property="Background"      Value="#1E1610"/>
-            <Setter Property="Foreground"      Value="#F2E8D8"/>
+            <Setter Property="Foreground"      Value="Black"/>
             <Setter Property="BorderBrush"     Value="#241A0E"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="FontSize"        Value="13"/>
@@ -105,7 +105,7 @@
 
         <Style x:Key="DateStyle" TargetType="DatePicker">
             <Setter Property="Background"      Value="#1E1610"/>
-            <Setter Property="Foreground"      Value="#F2E8D8"/>
+            <Setter Property="Foreground"      Value="Black"/>
             <Setter Property="BorderBrush"     Value="#241A0E"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="FontSize"        Value="13"/>
